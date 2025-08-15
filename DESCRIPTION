@@ -1,5 +1,5 @@
 Package: psychdsish
-Title: Tools to Create and Validate psych-DS-Inspired Project Structures
+Title: Tools to Create and Validate psych-DS Inspired R Project Structures
 Version: 0.1
 Authors@R: person("Ian", "Hussey", 
 	   email = "ian.hussey@unibe.ch", 
