@@ -119,7 +119,7 @@ github_repository_name/
 
 
 
-## Validation rules checked by `valiator()`
+## Validation rules checked by `validator()`
 
 A project is **psych-DS(ish)-compliant** if it follows all of the following rules:
 
