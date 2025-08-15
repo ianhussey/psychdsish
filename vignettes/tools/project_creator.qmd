@@ -13,6 +13,7 @@ execute:
 
 ```{r}
 
+library(psychdsish)
 create_project_skeleton(project_root = "../")
 
 ```
