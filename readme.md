@@ -1,6 +1,6 @@
 # psych-DS (ish)
 
-Psychology was just starting to develop a data standard - https://psych-ds.github.io/ - and then the inevitable happened and someone (me) created a different one. Sort of. 
+Psychology was just starting to develop a data standard - https://psych-ds.github.io/ - and then the inevitable happened and someone - me -  created an alternative standard. Sort of. 
 
 ![standards_proliferate](./man/figures/standards_proliferate.png)
 
