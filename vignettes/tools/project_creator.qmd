@@ -18,6 +18,8 @@ create_project_skeleton(project_root = "../")
 
 ```
 
+Note that you could also do this from the console without this .qmd file, if you know your project's file path, e.g., `psychdsish::create_project_skeleton(project_root = "~/git/my_project")`.
+
 ## Delete project files and directories except '../tools/'
 
 For testing. 
