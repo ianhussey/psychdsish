@@ -1,0 +1,27 @@
+# History files
+.Rhistory
+.Rapp.history
+
+# Session Data files
+.RData
+
+# User-specific files
+.Rproj.user/
+
+# Quarto / R Markdown caches
+_cache/
+*/_cache/
+*.knit.md
+*.utf8.md
+
+# Temporary files
+*.tmp
+*.log
+
+# Large data (use Git LFS or external storage)
+data/outputs/fitted_models/
+data/outputs/plots/
+
+# OS-specific files
+.DS_Store
+Thumbs.db

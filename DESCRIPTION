@@ -1,0 +1,28 @@
+Package: psychdsish
+Title: Tools to Create and Validate psych-DS-Inspired Project Structures
+Version: 0.1
+Authors@R: person("Ian", "Hussey", 
+	   email = "ian.hussey@unibe.ch", 
+           role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0001-8906-7559"))
+Description: An R package for creating an R/tidyverse project skeleton that is closely, but not entirely, compliant-ish with the psych-DS standard, and check whether a given project is compliant-ish with psych-DS. Hence, psych-DS(ish). The layout is loosely inspired by the [psych-DS](https://psych-ds.github.io/) specification, but is not fully psych-DS compliant. It adds extra conventions for reproducibility and common tidyverse workflows, including Quarto file templates and a .gitignore file. It does not comply with psych-ds's .json requirement.
+Depends: R (>= 3.3.3)
+LazyData: true
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
+Imports: 
+    fs,
+    dplyr,
+    stringr,
+    purrr,
+    tibble,
+    readr
+Suggests:
+    knitr,
+    kableExtra,
+    devtools,
+    roxygen2
+VignetteBuilder: knitr
+BuildVignettes: true

@@ -1,0 +1,32 @@
+---
+title: "analysis"
+author: "author"
+date: today
+format:
+  html:
+    code-fold: true
+    highlight-style: haddock
+    theme: flatly
+    toc: true
+    toc-location: left
+execute:
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: setup
+#| include: false
+# Turn off scientific notation globally
+options(scipen = 999)
+```
+
+# Dependencies
+```{r}
+# packages and setup here
+```
+
+# Session info
+```{r}
+sessionInfo()
+```

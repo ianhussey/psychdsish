@@ -1,0 +1,32 @@
+---
+title: "Create a project skeleton following the psych-ds-ish standard"
+format:
+  html:
+    toc: true
+    code-fold: true
+execute:
+  warning: false
+  message: false
+---
+
+## Create project skeleton
+
+```{r}
+
+create_project_skeleton(project_root = "../")
+
+```
+
+## Delete project files and directories except '../tools/'
+
+For testing. 
+
+WARNING: DELETES ALL FILES IN PARENT DIRECTORY OTHER THAN '../tools/' !!
+
+```{r}
+#| eval: false
+#| include: false
+
+delete_project_skeleton(project_root = "../", keep_dir = "tools")
+
+```
