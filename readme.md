@@ -10,7 +10,7 @@ It also has a validator function that lets users check that their project is sti
 
 ## Data Standards
 
-I am a big fan of the concept of standards, and the [psych-DS](https://psych-ds.github.io/) data standard specificlaly. Huge credit to Melissa Klein Struhl for leading it. 
+I am a big fan of the concept of standards, and the [psych-DS](https://psych-ds.github.io/) data standard specifically. Huge credit to Melissa Klein Struhl for leading it. 
 
 *But*:
 
@@ -20,9 +20,9 @@ I am a big fan of the concept of standards, and the [psych-DS](https://psych-ds.
 
 ## psych-DS-ish
 
-psych-DS-ish is an R package that therefore: 1) drops the .json requirement, and 2) provides function to create skelleton project structures (`create_project_skeleton()`) or delete them (for testing purposes: `delete_project_skeleton()`) and validate a given project against psych-DS-ish rules (`validator()`). 
+psych-DS-ish is an R package that therefore: 1) drops the .json requirement, and 2) provides function to create skeleton project structures (`create_project_skeleton()`) or delete them (for testing purposes: `delete_project_skeleton()`) and validate a given project against psych-DS-ish rules (`validator()`). 
 
-Does this contibute to Standards Proliferation? Yes, unfortunately. 
+Does this contribute to Standards Proliferation? Yes, unfortunately. 
 
 ![](./man/figures/standards_proliferate.png)
 
@@ -175,7 +175,7 @@ Results of `validator()` in a freshly generated project skeleton - note that som
 
 ## License
 
-(c) Ian Hussey (2025)
+© Ian Hussey (2025)
 
 MIT licence
 
