@@ -1,6 +1,6 @@
-# psych-DS-ish
-
 ![](./man/figures/hex_small.png)
+
+# psych-DS-ish
 
 Standardization of project structures is both very useful and, let's face it, not very exciting or at the top of anyone's To Do list. I wanted to make it easier, both in my own research and to teach students good practices. 
 
