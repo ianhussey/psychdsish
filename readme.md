@@ -4,7 +4,7 @@
 
 Standardization of project structures is both very useful and, let's face it, not very exciting or at the top of anyone's To Do list. I wanted to make it easier, both in my own research and to teach students good practices. 
 
-{psychdsish} creates a standardized project skeleton that is compliant-ish with psych-DS and also adds several features to improve reproducibility, such Quarto templates, a readme template, CC BY licence, and a .gitignore with reasonable defaults. 
+{psychdsish} creates a standardized project skeleton that is compliant-ish with [psych-DS](https://psych-ds.github.io/) and also adds several features to improve reproducibility, such Quarto templates, a readme template, CC BY licence, and a .gitignore with reasonable defaults. 
 
 It also has a validator function that lets users check that their project is still compliant with the standard and, if not, tells them how to rectify it.
 
@@ -24,7 +24,7 @@ psych-DS-ish is an R package that therefore: 1) drops the .json requirement, and
 
 Does this contibute to Standards Proliferation? Yes, unfortunately. 
 
-![standards_proliferate](./man/figures/standards_proliferate.png)
+![](./man/figures/standards_proliferate.png)
 
 psych-DS-ish makes no attempt to define or maintain the standard itself, which is its weak point and psych-DS's strength. I have no desire to duplicate psych-DS's great work there; psych-DS-ish is intended to be a code tool not a full data standard. psych-DS-ish could be updated in future to bring it more in line with psych-DS, or psych-DS could distribute, fork, or otherwise make use of psych-DS-ish's skeleton generation tool. 
 
