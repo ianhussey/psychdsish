@@ -180,4 +180,4 @@ Results of `validator()` in a freshly generated project skeleton - note that som
 MIT licence
 
 ## Suggested citation
-Hussey, I. (2025) psych-DS-ish: Tools to Create and Validate psych-DS-Inspired Project Structures. https://gitHub.com/ianhussey/psychdsish
+Hussey, I. (2025) psych-DS-ish: Tools to Create and Validate psych-DS-Inspired Project Structures. https://github.com/ianhussey/psychdsish
