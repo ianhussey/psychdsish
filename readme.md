@@ -2,11 +2,15 @@
 
 # psych-DS-ish
 
-Psychology was just starting to develop a data standard - https://psych-ds.github.io/ - and then the inevitable happened and someone - me -  created an alternative standard. Sort of. 
+Standardization of project structures is both very useful and, let's face it, not very exciting or at the top of anyone's To Do list. I wanted to make it easier, both in my own research and to teach students good practices. 
 
-![standards_proliferate](./man/figures/standards_proliferate.png)
+{psychdsish} creates a standardized project skeleton that is compliant-ish with psych-DS and also adds several features to improve reproducibility, such Quarto templates, a readme template, CC BY licence, and a .gitignore with reasonable defaults. 
 
-I am a big fan of the concept of standards, and psych-DS in particular as a data standard specifically, which I contributed to in a very minor way. Huge credit to Melissa Klein Struhl for leading it. 
+It also has a validator function that lets users check that their project is still compliant with the standard and, if not, tells them how to rectify it.
+
+## Data Standards
+
+I am a big fan of the concept of standards, and the [psych-DS](https://psych-ds.github.io/) data standard specificlaly. Huge credit to Melissa Klein Struhl for leading it. 
 
 *But*:
 
@@ -14,7 +18,13 @@ I am a big fan of the concept of standards, and psych-DS in particular as a data
 2. psych-DS is purposefully light-weight on what it requires users to do to be compliant. I'm ok being slightly more heavy handed given that my use case is a) my own projects and b) students in my R/tidyverse classes.
 3. psych-DS focuses on *testing* compliance with the standard but not *assisting* the user in setting up a project that is compliant in the first place. Approached as a human-factors problem, this is likely to decrease uptake of psych-DS, given that tidying up a project after the fact is usually harder than providing a template up front.
 
+## psych-DS-ish
+
 psych-DS-ish is an R package that therefore: 1) drops the .json requirement, and 2) provides function to create skelleton project structures (`create_project_skeleton()`) or delete them (for testing purposes: `delete_project_skeleton()`) and validate a given project against psych-DS-ish rules (`validator()`). 
+
+Does this contibute to Standards Proliferation? Yes, unfortunately. 
+
+![standards_proliferate](./man/figures/standards_proliferate.png)
 
 psych-DS-ish makes no attempt to define or maintain the standard itself, which is its weak point and psych-DS's strength. I have no desire to duplicate psych-DS's great work there; psych-DS-ish is intended to be a code tool not a full data standard. psych-DS-ish could be updated in future to bring it more in line with psych-DS, or psych-DS could distribute, fork, or otherwise make use of psych-DS-ish's skeleton generation tool. 
 
@@ -140,6 +150,28 @@ A project is **psych-DS(ish)-compliant** if it follows all of the following rule
 | **Filenames**             | No spaces | Any filename containing spaces |
 
 
+
+### Usage
+
+Before running the 'project_creator.qmd' script:
+
+![](./man/figures/before.png)
+<br>
+
+After running the 'project_creator.qmd' script:
+
+![](./man/figures/after.png)
+<br>
+
+You can also use the function directly from the console without needing the .qmd file, if you know your project's file path. E.g., `psychdsish::create_project_skeleton(project_root = "~/git/my_project")`.
+
+<br>
+
+Results of `validator()` in a freshly generated project skeleton - note that some tests are not printed unless failed:
+
+![](./man/figures/validator.png)
+
+<br>
 
 ## License
 
