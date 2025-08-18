@@ -149,7 +149,7 @@ validator <- function(project_root = "../"){
     rds  = list(must_be_in = c("data"), must_exist_in_each = FALSE, forbidden_elsewhere = TRUE),
     tsv  = list(must_be_in = c("data"), must_exist_in_each = FALSE, forbidden_elsewhere = TRUE),
     dta  = list(must_be_in = c("data"), must_exist_in_each = FALSE, forbidden_elsewhere = TRUE),
-    pdf  = list(must_be_in = c("data/outputs", "data/raw"), must_exist_in_each = FALSE, forbidden_elsewhere = TRUE),
+    pdf  = list(must_be_in = c("data/outputs", "data/raw", "methods", "reports",  "preregistration"), must_exist_in_each = FALSE, forbidden_elsewhere = TRUE),
     feather  = list(must_be_in = c("data"), must_exist_in_each = FALSE, forbidden_elsewhere = TRUE),
     sav  = list(must_be_in = c("data"), must_exist_in_each = FALSE, forbidden_elsewhere = TRUE),
     png  = list(must_be_in = c("data/outputs/plots", "data/raw"), must_exist_in_each = FALSE, forbidden_elsewhere = TRUE),

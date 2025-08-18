@@ -141,7 +141,7 @@ A project is **psych-DS(ish)-compliant** if it follows all of the following rule
 | **Required files**        | `readme.md` (case-insensitive), license file (`LICENSE` preferred) | Missing either required file |
 | **.qmd**, **.Rmd**, **.R** | In `code/` or `tools/` | Anywhere else |
 | **.csv**, **.xlsx**, **.tsv**, **.dta**, **.sav**, **.feather**, **.rds** | In `data/` | Anywhere else (including `code/`) |
-| **.pdf**                  | In `data/outputs/` or `data/raw/` | Anywhere else |
+| **.pdf**                  | In `data/outputs/`, `data/raw/`, `reports/`,  `preregistration/`, or `methods/` | Anywhere else |
 | **.png**                  | In `data/outputs/plots/` or `data/raw/` | Anywhere else |
 | **.docx**                 | In `reports/`, `methods/`, `preregistration/`, `data/outputs/results/`, or `data/raw/` | Anywhere else |
 | **.html**                 | In `code/` or `methods/` | Anywhere else |
