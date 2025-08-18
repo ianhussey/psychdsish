@@ -173,6 +173,12 @@ Results of `validator()` in a freshly generated project skeleton - note that som
 
 <br>
 
+
+
+## TODO
+
+- add argument to validator to toggle assesment of psych-DS vs psych-ds-ish? Or if psych-DS release their own R validator, adopt it here?
+
 ## License
 
 © Ian Hussey (2025)
