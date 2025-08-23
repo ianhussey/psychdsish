@@ -26,7 +26,7 @@ psychdsish::print_poorly_styled_code()
 
 Note that this code is valid and runs, it's just hideous to try to read.
 
-See here for .gif of how {styler} works with point and click.
+See [here](https://styler.r-lib.org/) for .gif of how {styler} works with point and click.
 
 Highlight the code and restyle using 'Addins>STYLER>Style selection'
 
