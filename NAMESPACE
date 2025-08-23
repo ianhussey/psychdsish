@@ -3,6 +3,7 @@
 export(check_unused_dependencies)
 export(create_project_skeleton)
 export(delete_project_skeleton)
+export(print_poorly_styled_code)
 export(style_all_files)
 export(validator)
 import(dplyr)
