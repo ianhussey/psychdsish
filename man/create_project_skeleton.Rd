@@ -66,6 +66,8 @@ chunk, and \code{sessionInfo()} chunk
 {tidyverse} code style to all \code{.qmd}, \code{.Rmd}, and \code{.R} files
 \item \code{tools/detect_unused_dependencies.qmd} - reproducibility tool to
 check whether there are unused dependencies in a project
+\item \code{tools/detect_unused_objects.qmd} - reproducibility tool to
+check whether there are unused objects in a project
 }
 
 Quarto \code{.qmd} files are pre-filled with:
