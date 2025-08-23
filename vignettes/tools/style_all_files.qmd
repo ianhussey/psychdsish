@@ -1,0 +1,18 @@
+---
+title: "Apply {tidyverse} code style to all .qmd, .Rmd, and .R files in a project"
+format:
+  html:
+    toc: true
+    code-fold: true
+execute:
+  warning: false
+  message: false
+---
+
+```{r}
+
+library(psychdsish)
+
+style_all_files(root = "../")
+
+```
