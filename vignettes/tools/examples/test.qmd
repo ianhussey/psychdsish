@@ -1,0 +1,13 @@
+---
+title: "Tracing demo"
+format: html
+---
+
+```{r}
+library(dplyr)   # attached, but not used
+library(tidyr)
+
+data.frame(x = 10) %>%
+  mutate(x = x*2,
+         x_string = stringr::str_detect(x, "10")) # used by not loaded via library()
+```

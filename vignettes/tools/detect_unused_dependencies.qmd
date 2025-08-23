@@ -1,0 +1,25 @@
+---
+title: "Check if there are unused dependencies"
+format:
+  html:
+    toc: true
+    code-fold: true
+execute:
+  warning: false
+  message: false
+---
+
+```{r}
+
+library(psychdsish)
+library(knitr)
+library(kableExtra)
+
+res <- check_unused_dependencies(root = "examples")
+
+res |>
+  kable() |>
+  kable_classic(full_width = FALSE)
+
+```
+
