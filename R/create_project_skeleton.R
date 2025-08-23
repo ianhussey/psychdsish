@@ -303,7 +303,7 @@ create_project_skeleton <- function(project_root = "../", overwrite = FALSE) {
   
   # --- tools/detect_unused_dependencies.qmd ---
   tools_dependencies_qmd_path <- join(project_root, "tools", "detect_unused_dependencies.qmd")
-  tools_depedencies_qmd_text <- paste(
+  tools_dependencies_qmd_text <- paste(
     "---",
     'title: "Check if there are unused dependencies in a project"',
     "format:",
