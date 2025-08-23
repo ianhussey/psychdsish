@@ -339,11 +339,12 @@ create_project_skeleton <- function(project_root = "../", overwrite = FALSE) {
       license_path,
       readme_path,
       file.path(project_root, qmd_files),
-      tools_style_qmd_path
+      tools_style_qmd_path,
+      tools_dependencies_qmd_path
     ),
     type = c(
       rep("dir", length(paths_dir)),
-      "file", "file", rep("file", length(qmd_files)), "file"
+      "file", "file", rep("file", length(qmd_files)), "file", "file" 
     )
   )
   invisible(created)
