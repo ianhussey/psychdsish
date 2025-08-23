@@ -37,6 +37,7 @@
 #'     }
 #'   \item `methods/` - measurement instruments, implementation files
 #'   \item `preregistration/` - preregistration documents
+#'   \item `tools/` - utility scripts and reproducibility helpers
 #' }
 #'
 #' The following files are created (if not already present):
@@ -48,6 +49,10 @@
 #'   \item `code/analysis.qmd` - Quarto analysis template with metadata, setup
 #'     chunk, and `sessionInfo()` chunk
 #'   \item `code/processing.qmd` - Quarto processing template (same structure)
+#'   \item `tools/style_all_files.qmd` - reproducibility tool to apply
+#'     {tidyverse} code style to all `.qmd`, `.Rmd`, and `.R` files
+#'   \item `tools/detect_unused_dependencies.qmd` - reproducibility tool to
+#'     check whether there are unused dependencies in a project
 #' }
 #'
 #' Quarto `.qmd` files are pre-filled with:
@@ -294,6 +299,38 @@ create_project_skeleton <- function(project_root = "../", overwrite = FALSE) {
     sep = "\n"
   )
   write_if_absent(tools_style_qmd_path, tools_style_qmd_text)
+  
+  
+  # --- tools/detect_unused_dependencies.qmd ---
+  tools_dependencies_qmd_path <- join(project_root, "tools", "detect_unused_dependencies.qmd")
+  tools_depedencies_qmd_text <- paste(
+    "---",
+    'title: "Check if there are unused dependencies in a project"',
+    "format:",
+    "  html:",
+    "    toc: true",
+    "    code-fold: true",
+    "execute:",
+    "  warning: false",
+    "  message: false",
+    "---",
+    "",
+    "```{r}",
+    "",
+    "library(psychdsish)",
+    "library(knitr)",
+    "library(kableExtra)",
+    "",
+    "res <- check_unused_dependencies(root = '../')",
+    "",
+    "res |>",
+    "  kable() |>",
+    "  kable_classic(full_width = FALSE)",
+    "",
+    "```",
+    sep = "\n"
+  )
+  write_if_absent(tools_dependencies_qmd_path, tools_dependencies_qmd_text)
   
   # return a summary
   created <- data.frame(

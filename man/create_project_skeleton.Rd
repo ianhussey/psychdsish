@@ -50,6 +50,7 @@ The following directories are created (if not already present):
 }
 \item \verb{methods/} - measurement instruments, implementation files
 \item \verb{preregistration/} - preregistration documents
+\item \verb{tools/} - utility scripts and reproducibility helpers
 }
 
 The following files are created (if not already present):
@@ -61,6 +62,10 @@ OS-specific clutter, and large output directories
 \item \code{code/analysis.qmd} - Quarto analysis template with metadata, setup
 chunk, and \code{sessionInfo()} chunk
 \item \code{code/processing.qmd} - Quarto processing template (same structure)
+\item \code{tools/style_all_files.qmd} - reproducibility tool to apply
+{tidyverse} code style to all \code{.qmd}, \code{.Rmd}, and \code{.R} files
+\item \code{tools/detect_unused_dependencies.qmd} - reproducibility tool to
+check whether there are unused dependencies in a project
 }
 
 Quarto \code{.qmd} files are pre-filled with:
