@@ -1,5 +1,5 @@
 ---
-title: "Detect unused objects"
+title: "Check if there are unused objects"
 format:
   html:
     toc: true
@@ -16,8 +16,14 @@ This function lets you scan all .qmd, .Rmd, and .R files in your project for unu
 ```{r}
 
 library(psychdsish)
+library(knitr)
+library(kableExtra)
 
-check_unused_objects(root = "../")
+res <- check_unused_objects(root = "../")
+
+res |>
+  kable() |>
+  kable_classic(full_width = FALSE)
 
 ```
 

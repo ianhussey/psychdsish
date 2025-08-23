@@ -15,7 +15,7 @@ library(psychdsish)
 library(knitr)
 library(kableExtra)
 
-res <- check_unused_dependencies(root = "examples")
+res <- check_unused_dependencies(root = "../")
 
 res |>
   kable() |>
