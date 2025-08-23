@@ -18,11 +18,14 @@ Imports:
     stringr,
     purrr,
     tibble,
-    readr
+    readr,
+    jsonlite,
+    quarto,
+    rmarkdown
 Suggests:
     knitr,
     kableExtra,
     devtools,
     roxygen2
 VignetteBuilder: knitr
-BuildVignettes: true
+BuildVignettes: false
