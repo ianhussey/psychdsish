@@ -21,7 +21,8 @@ Imports:
     readr,
     jsonlite,
     quarto,
-    rmarkdown
+    rmarkdown,
+    styler
 Suggests:
     knitr,
     kableExtra,

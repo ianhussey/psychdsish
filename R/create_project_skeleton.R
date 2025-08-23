@@ -22,32 +22,32 @@
 #' @details
 #' The following directories are created (if not already present):
 #' \itemize{
-#'   \item `code/` — analysis and processing scripts (`.qmd`/`.Rmd`)
-#'   \item `reports/` — manuscripts, slides, preprints, etc.
+#'   \item `code/` - analysis and processing scripts (`.qmd`/`.Rmd`)
+#'   \item `reports/` - manuscripts, slides, preprints, etc.
 #'   \item `data/`
 #'     \itemize{
-#'       \item `data/raw/` — immutable raw data + dictionaries/codebooks
-#'       \item `data/processed/` — cleaned datasets and dictionaries
-#'       \item `data/outputs/` — outputs from processing/analysis scripts
+#'       \item `data/raw/` - immutable raw data + dictionaries/codebooks
+#'       \item `data/processed/` - cleaned datasets and dictionaries
+#'       \item `data/outputs/` - outputs from processing/analysis scripts
 #'         \itemize{
-#'           \item `plots/` — figures (`.png`, `.pdf`, etc.)
-#'           \item `fitted_models/` — saved model objects (e.g., `.rds`)
-#'           \item `results/` — tables, summaries, descriptive statistics
+#'           \item `plots/` - figures (`.png`, `.pdf`, etc.)
+#'           \item `fitted_models/` - saved model objects (e.g., `.rds`)
+#'           \item `results/` - tables, summaries, descriptive statistics
 #'         }
 #'     }
-#'   \item `methods/` — measurement instruments, implementation files
-#'   \item `preregistration/` — preregistration documents
+#'   \item `methods/` - measurement instruments, implementation files
+#'   \item `preregistration/` - preregistration documents
 #' }
 #'
 #' The following files are created (if not already present):
 #' \itemize{
-#'   \item `LICENSE` — CC BY 4.0 license text
-#'   \item `readme.md` — skeleton README describing project aims and structure
-#'   \item `.gitignore` — ignores R history, session data, caches, temp files,
+#'   \item `LICENSE` - CC BY 4.0 license text
+#'   \item `readme.md` - skeleton README describing project aims and structure
+#'   \item `.gitignore` - ignores R history, session data, caches, temp files,
 #'     OS-specific clutter, and large output directories
-#'   \item `code/analysis.qmd` — Quarto analysis template with metadata, setup
+#'   \item `code/analysis.qmd` - Quarto analysis template with metadata, setup
 #'     chunk, and `sessionInfo()` chunk
-#'   \item `code/processing.qmd` — Quarto processing template (same structure)
+#'   \item `code/processing.qmd` - Quarto processing template (same structure)
 #' }
 #'
 #' Quarto `.qmd` files are pre-filled with:
@@ -103,16 +103,13 @@ create_project_skeleton <- function(project_root = "../", overwrite = FALSE) {
     "data/outputs/fitted_models",
     "data/outputs/results",
     "methods",
-    "preregistration"
+    "preregistration",
+    "tools"                      # <- added to ensure the tools dir exists
   )
   
   # create all directories
   paths_dir <- file.path(project_root, dirs)
   invisible(lapply(paths_dir, mkd))
-  
-  # # add .gitkeep to keep empty dirs in VCS
-  # gitkeep_dirs <- paths_dir
-  # invisible(lapply(gitkeep_dirs, function(d) touch(join(d, ".gitkeep"))))
   
   # --- files: LICENSE (CC BY 4.0) & README ---
   license_path <- join(project_root, "LICENSE")
@@ -122,10 +119,10 @@ create_project_skeleton <- function(project_root = "../", overwrite = FALSE) {
     "International License. You are free to share and adapt the material for",
     "any purpose, even commercially, under the terms below:",
     "",
-    "  - Attribution — You must give appropriate credit, provide a link to the",
+    "  - Attribution - You must give appropriate credit, provide a link to the",
     "    license, and indicate if changes were made.",
     "",
-    "No additional restrictions — You may not apply legal terms or technological",
+    "No additional restrictions - You may not apply legal terms or technological",
     "measures that legally restrict others from doing anything the license permits.",
     "",
     "Full license text: https://creativecommons.org/licenses/by/4.0/legalcode",
@@ -174,9 +171,7 @@ create_project_skeleton <- function(project_root = "../", overwrite = FALSE) {
     "Authors (Year). Title. URL.",
     sep = "\n"
   )
-  
   write_if_absent(readme_path, readme_text)
-  
   
   # --- .gitignore ---
   gitignore_path <- join(project_root, ".gitignore")
@@ -213,7 +208,6 @@ create_project_skeleton <- function(project_root = "../", overwrite = FALSE) {
   write_if_absent(gitignore_path, gitignore_text)
   
   # --- .gitattributes ---
-  # this helps github to detect the repo as an R project rather than a html project
   gitattributes_path <- join(project_root, ".gitattributes")
   gitattributes_text <- paste(
     "# Auto detect text files and perform LF normalization",
@@ -225,31 +219,21 @@ create_project_skeleton <- function(project_root = "../", overwrite = FALSE) {
   )
   write_if_absent(gitattributes_path, gitattributes_text)
   
-  
-  # --- empty .Rmd stubs ---
+  # --- empty .qmd stubs ---
   qmd_files <- c(
     "code/analysis.qmd",
     "code/processing.qmd"
   )
   qmd_header <- function(title) {
-    # Normalize both paths
     project_root_norm <- normalizePath(project_root, winslash = "/", mustWork = FALSE)
     title_norm <- normalizePath(title, winslash = "/", mustWork = FALSE)
-    
-    # Remove project_root prefix if present
     if (startsWith(title_norm, project_root_norm)) {
-      title_clean <- substr(title_norm, nchar(project_root_norm) + 2, nchar(title_norm)) 
-      # +2 accounts for trailing slash in project_root_norm
+      title_clean <- substr(title_norm, nchar(project_root_norm) + 2, nchar(title_norm))
     } else {
       title_clean <- title
     }
-    
-    # Remove leading "code/" if present
     title_clean <- sub("^code/", "", title_clean)
-    
-    # Remove trailing ".qmd"
     title_clean <- sub("\\.qmd$", "", title_clean)
-    
     paste0(
       "---\n",
       "title: \"", title_clean, "\"\n",
@@ -266,19 +250,16 @@ create_project_skeleton <- function(project_root = "../", overwrite = FALSE) {
       "  warning: false\n",
       "  message: false\n",
       "---\n\n",
-      
       "```{r}\n",
       "#| label: setup\n",
       "#| include: false\n",
       "# Turn off scientific notation globally\n",
       "options(scipen = 999)\n",
       "```\n\n",
-      
       "# Dependencies\n",
       "```{r}\n",
       "# packages and setup here\n",
       "```\n\n",
-      
       "# Session info\n",
       "```{r}\n",
       "sessionInfo()\n",
@@ -289,13 +270,44 @@ create_project_skeleton <- function(project_root = "../", overwrite = FALSE) {
     write_if_absent(join(project_root, rel), qmd_header(gsub("^code/|\\.qmd$", "", rel)))
   }))
   
+  # --- tools/style_all_files.qmd ---
+  tools_style_qmd_path <- join(project_root, "tools", "style_all_files.qmd")
+  tools_style_qmd_text <- paste(
+    "---",
+    'title: "Apply {tidyverse} code style to all .qmd, .Rmd, and .R files in a project"',
+    "format:",
+    "  html:",
+    "    toc: true",
+    "    code-fold: true",
+    "execute:",
+    "  warning: false",
+    "  message: false",
+    "---",
+    "",
+    "```{r}",
+    "",
+    "library(psychdsish)",
+    "",
+    'style_all_files(root = "../")',
+    "",
+    "```",
+    sep = "\n"
+  )
+  write_if_absent(tools_style_qmd_path, tools_style_qmd_text)
+  
   # return a summary
   created <- data.frame(
-    path = c(paths_dir,
-             license_path, readme_path,
-             file.path(project_root, qmd_files)),
-    type = c(rep("dir", length(paths_dir)),
-             "file","file", rep("file", length(qmd_files)))
+    path = c(
+      paths_dir,
+      license_path,
+      readme_path,
+      file.path(project_root, qmd_files),
+      tools_style_qmd_path
+    ),
+    type = c(
+      rep("dir", length(paths_dir)),
+      "file", "file", rep("file", length(qmd_files)), "file"
+    )
   )
   invisible(created)
 }

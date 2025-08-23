@@ -35,32 +35,32 @@ defaults for licensing, reproducibility, and version control.
 
 The following directories are created (if not already present):
 \itemize{
-\item \verb{code/} — analysis and processing scripts (\code{.qmd}/\code{.Rmd})
-\item \verb{reports/} — manuscripts, slides, preprints, etc.
+\item \verb{code/} - analysis and processing scripts (\code{.qmd}/\code{.Rmd})
+\item \verb{reports/} - manuscripts, slides, preprints, etc.
 \item \verb{data/}
 \itemize{
-\item \verb{data/raw/} — immutable raw data + dictionaries/codebooks
-\item \verb{data/processed/} — cleaned datasets and dictionaries
-\item \verb{data/outputs/} — outputs from processing/analysis scripts
+\item \verb{data/raw/} - immutable raw data + dictionaries/codebooks
+\item \verb{data/processed/} - cleaned datasets and dictionaries
+\item \verb{data/outputs/} - outputs from processing/analysis scripts
 \itemize{
-\item \verb{plots/} — figures (\code{.png}, \code{.pdf}, etc.)
-\item \verb{fitted_models/} — saved model objects (e.g., \code{.rds})
-\item \verb{results/} — tables, summaries, descriptive statistics
+\item \verb{plots/} - figures (\code{.png}, \code{.pdf}, etc.)
+\item \verb{fitted_models/} - saved model objects (e.g., \code{.rds})
+\item \verb{results/} - tables, summaries, descriptive statistics
 }
 }
-\item \verb{methods/} — measurement instruments, implementation files
-\item \verb{preregistration/} — preregistration documents
+\item \verb{methods/} - measurement instruments, implementation files
+\item \verb{preregistration/} - preregistration documents
 }
 
 The following files are created (if not already present):
 \itemize{
-\item \code{LICENSE} — CC BY 4.0 license text
-\item \code{readme.md} — skeleton README describing project aims and structure
-\item \code{.gitignore} — ignores R history, session data, caches, temp files,
+\item \code{LICENSE} - CC BY 4.0 license text
+\item \code{readme.md} - skeleton README describing project aims and structure
+\item \code{.gitignore} - ignores R history, session data, caches, temp files,
 OS-specific clutter, and large output directories
-\item \code{code/analysis.qmd} — Quarto analysis template with metadata, setup
+\item \code{code/analysis.qmd} - Quarto analysis template with metadata, setup
 chunk, and \code{sessionInfo()} chunk
-\item \code{code/processing.qmd} — Quarto processing template (same structure)
+\item \code{code/processing.qmd} - Quarto processing template (same structure)
 }
 
 Quarto \code{.qmd} files are pre-filled with:
