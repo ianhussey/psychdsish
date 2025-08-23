@@ -38,6 +38,7 @@
 #' }
 #'
 #' @seealso [styler::style_file()], [styler::style_dir()], [usethis::use_tidy_style()]
+#' @export
 style_all_files <- function(
     root = ".",
     patterns = c("\\.R$", "\\.r$", "\\.Rmd$", "\\.rmd$", "\\.qmd$", "\\.Qmd$"),
