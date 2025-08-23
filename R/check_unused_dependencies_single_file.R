@@ -121,7 +121,7 @@
   }
   
   rendered <- isTRUE(tryCatch({ run_quarto(); TRUE },
-                              error = function(e) { message("Quarto render failed → trying R Markdown. ", conditionMessage(e)); FALSE }))
+                              error = function(e) { message("Quarto render failed, trying R Markdown. ", conditionMessage(e)); FALSE }))
   if (!rendered) {
     rendered <- isTRUE(tryCatch({ run_rmd(); TRUE },
                                 error = function(e) { stop("Both Quarto and R Markdown renders failed: ", conditionMessage(e)) }))
