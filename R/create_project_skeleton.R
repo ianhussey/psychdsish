@@ -303,72 +303,72 @@ create_project_skeleton <- function(project_root = "../", overwrite = FALSE) {
   write_if_absent(tools_style_qmd_path, tools_style_qmd_text)
   
   
-  # --- tools/detect_unused_dependencies.qmd ---
-  tools_dependencies_qmd_path <- join(project_root, "tools", "check_unused_dependencies.qmd")
-  tools_dependencies_qmd_text <- paste(
-    "---",
-    'title: "Check if there are unused dependencies in a project"',
-    "format:",
-    "  html:",
-    "    toc: true",
-    "    code-fold: true",
-    "execute:",
-    "  warning: false",
-    "  message: false",
-    "---",
-    "",
-    "```{r}",
-    "",
-    "library(psychdsish)",
-    "library(knitr)",
-    "library(kableExtra)",
-    "",
-    "res <- check_unused_dependencies(root = '../')",
-    "",
-    "res |>",
-    "  kable() |>",
-    "  kable_classic(full_width = FALSE)",
-    "",
-    "```",
-    sep = "\n"
-  )
-  write_if_absent(tools_dependencies_qmd_path, tools_dependencies_qmd_text)
-  
-  
-  # --- tools/check_unused_objects.qmd ---
-  tools_unused_objects_qmd_path <- join(project_root, "tools", "check_unused_objects.qmd")
-  tools_unused_objects_qmd_text <- paste(
-    "---",
-    'title: "Check if there are unused objects in a project"',
-    "format:",
-    "  html:",
-    "    toc: true",
-    "    code-fold: true",
-    "execute:",
-    "  warning: false",
-    "  message: false",
-    "---",
-    "",
-    "When learning to code, it's very easy to accidentally create objects (e.g., data frames) and then never use them in your code. Sometimes, users create 'df2' from 'df1' but, later in the code, go back to calling 'df1'. These 'orphan' objects can represent errors or generally make code confusing - why create an object that is never used?",
-    "",
-    "This function lets you scan all .qmd, .Rmd, and .R files in your project for unused 'orphan' objects. If you find your project contains them, you should think about whether they're redundant and can be removed, or whether maybe you have an error (e.g., maybe subsequent code should call these objects and not others).",
-    "",
-    "```{r}",
-    "",
-    "library(psychdsish)",
-    "library(knitr)",
-    "library(kableExtra)",
-    "",
-    "res <- check_unused_objects(root = '../')",
-    "",
-    "res |>",
-    "  kable() |>",
-    "  kable_classic(full_width = FALSE)",
-    "",
-    "```",
-    sep = "\n"
-  )
-  write_if_absent(tools_unused_objects_qmd_path, tools_unused_objects_qmd_text)
+  # # --- tools/detect_unused_dependencies.qmd ---
+  # tools_dependencies_qmd_path <- join(project_root, "tools", "check_unused_dependencies.qmd")
+  # tools_dependencies_qmd_text <- paste(
+  #   "---",
+  #   'title: "Check if there are unused dependencies in a project"',
+  #   "format:",
+  #   "  html:",
+  #   "    toc: true",
+  #   "    code-fold: true",
+  #   "execute:",
+  #   "  warning: false",
+  #   "  message: false",
+  #   "---",
+  #   "",
+  #   "```{r}",
+  #   "",
+  #   "library(psychdsish)",
+  #   "library(knitr)",
+  #   "library(kableExtra)",
+  #   "",
+  #   "res <- check_unused_dependencies(root = '../')",
+  #   "",
+  #   "res |>",
+  #   "  kable() |>",
+  #   "  kable_classic(full_width = FALSE)",
+  #   "",
+  #   "```",
+  #   sep = "\n"
+  # )
+  # write_if_absent(tools_dependencies_qmd_path, tools_dependencies_qmd_text)
+  # 
+  # 
+  # # --- tools/check_unused_objects.qmd ---
+  # tools_unused_objects_qmd_path <- join(project_root, "tools", "check_unused_objects.qmd")
+  # tools_unused_objects_qmd_text <- paste(
+  #   "---",
+  #   'title: "Check if there are unused objects in a project"',
+  #   "format:",
+  #   "  html:",
+  #   "    toc: true",
+  #   "    code-fold: true",
+  #   "execute:",
+  #   "  warning: false",
+  #   "  message: false",
+  #   "---",
+  #   "",
+  #   "When learning to code, it's very easy to accidentally create objects (e.g., data frames) and then never use them in your code. Sometimes, users create 'df2' from 'df1' but, later in the code, go back to calling 'df1'. These 'orphan' objects can represent errors or generally make code confusing - why create an object that is never used?",
+  #   "",
+  #   "This function lets you scan all .qmd, .Rmd, and .R files in your project for unused 'orphan' objects. If you find your project contains them, you should think about whether they're redundant and can be removed, or whether maybe you have an error (e.g., maybe subsequent code should call these objects and not others).",
+  #   "",
+  #   "```{r}",
+  #   "",
+  #   "library(psychdsish)",
+  #   "library(knitr)",
+  #   "library(kableExtra)",
+  #   "",
+  #   "res <- check_unused_objects(root = '../')",
+  #   "",
+  #   "res |>",
+  #   "  kable() |>",
+  #   "  kable_classic(full_width = FALSE)",
+  #   "",
+  #   "```",
+  #   sep = "\n"
+  # )
+  # write_if_absent(tools_unused_objects_qmd_path, tools_unused_objects_qmd_text)
   
   
   # return a summary
