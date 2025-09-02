@@ -1,0 +1,81 @@
+---
+title: "Check and correct project against multiple criteria"
+format:
+  html:
+    toc: true
+    code-fold: true
+execute:
+  warning: false
+  message: false
+---
+
+## Dependencies
+
+```{r}
+
+# install.packages("devtools"); devtools::install_github("ianhussey/psychdsish")
+library(psychdsish)
+library(knitr)
+library(kableExtra)
+
+```
+
+## Check project structure against psych-ds-ish standard
+
+Projects are easier to manage when different types of things (data, code, reports, etc) are in predictable and consistent places. Psych-DS is a data standard specifying various features of how data (and code) should and should not be organised within a project to make things predictable, while remaining flexible enough to accomodate different types of research studies. The {psychdsish} package can create, and validate, compliance with Psych-DS ... ish. It is not fully compliant with it in some technical ways, and is much stricter than it in other ways to provide students with more structure. 
+
+This chunk checks the project's compliance with psychdsish and makes suggestions for what would make it better organised.
+
+```{r}
+
+res_validator <- validator(project_root = "../") 
+
+res_validator |>
+  knitr::kable() |>
+  kableExtra::kable_classic(full_width = FALSE)
+
+```
+
+## Apply {tidyverse} code style to all .qmd, .Rmd, and .R files in a project
+
+Code is easier to read when it is consistently written and uses common practices. These practices are sometimes formalised as code style guides, such as the tidyverse style guide. There are R packages that will automatically reformat your code to be compliant with the tidyverse style guide, including [{styler}(https://styler.r-lib.org/). The {psychdsish} package contains a `style_all_files()` 'wrapper' function that applies {styler} to all .qmd, .Rmd and .R files in a project.
+
+```{r}
+
+style_all_files(root = "../")
+
+```
+
+## Check for unused dependencies
+
+When learning to code, it's very load libraries/dependencies out of habit without using their functions, or to remove code but forget to delete now-unnecessary `library()` calls.  
+
+This function lets you scan all .qmd, .Rmd, and .R files in your project for unused libraries that are likely loaded but not used. If you find your project contains them, you should think about whether they're redundant and can be removed.
+
+```{r}
+
+res_unused_dependencies <- check_unused_dependencies(root = "../")
+
+res_unused_dependencies |>
+  kable() |>
+  kable_classic(full_width = FALSE)
+
+```
+
+## Check for unused objects
+
+When learning to code, it's very easy to accidentally create objects (e.g., data frames) and then never use them in your code. Sometimes, users create "df2" from "df1" but, later in the code, go back to calling "df1". These 'orphan' objects can represent errors or generally make code confusing - why create an object that is never used?  
+
+This function lets you scan all .qmd, .Rmd, and .R files in your project for unused 'orphan' objects. If you find your project contains them, you should think about whether they're redundant and can be removed, or whether maybe you have an error (e.g., maybe subsequent code should call these objects and not others).
+
+```{r}
+
+res <- check_unused_objects(root = "../")
+
+res |>
+  kable() |>
+  kable_classic(full_width = FALSE)
+
+```
+
+

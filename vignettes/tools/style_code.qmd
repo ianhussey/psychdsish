@@ -1,5 +1,5 @@
 ---
-title: "{styler} demo"
+title: "Apply {tidyverse} code style"
 format:
   html:
     toc: true
