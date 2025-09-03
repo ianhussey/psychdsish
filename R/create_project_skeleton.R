@@ -48,7 +48,7 @@
 #' The following files are created (if not already present):
 #' \itemize{
 #'   \item `LICENSE` - CC BY 4.0 license text
-#'   \item `readme.md` - skeleton README describing project aims and structure
+#'   \item `README.md` - skeleton README describing project aims and structure
 #'   \item `dataset_description.json` - JSON-LD dataset metadata file
 #'   \item `.gitignore` - ignores R history, session data, caches, temp files,
 #'     OS-specific clutter, and large output directories
@@ -57,10 +57,6 @@
 #'   \item `code/processing.qmd` - Quarto processing template (same structure)
 #'   \item `tools/style_all_files.qmd` - reproducibility tool to apply
 #'     {tidyverse} code style to all `.qmd`, `.Rmd`, and `.R` files
-#'   \item `tools/detect_unused_dependencies.qmd` - reproducibility tool to
-#'     check whether there are unused dependencies in a project
-#'   \item `tools/detect_unused_objects.qmd` - reproducibility tool to
-#'     check whether there are unused objects in a project
 #' }
 #'
 #' Quarto `.qmd` files are pre-filled with:
@@ -77,24 +73,32 @@
 #'
 #' @examples
 #' \dontrun{
-#' # Create a skeleton in a parent directory with interactive prompts
+#' # Create a skeleton in a parent directory
 #' create_project_skeleton(project_root = "../", overwrite = FALSE)
 #'
-#' # Create with specified name and description
-#' create_project_skeleton(
-#'   project_root = ".", 
-#'   overwrite = TRUE,
-#'   project_name = "My Research Study",
-#'   project_description = "A longitudinal study examining cognitive development"
-#' )
+#' # Create in the current working directory and overwrite any existing templates
+#' create_project_skeleton(project_root = ".", overwrite = TRUE)
 #' 
 #' # Create in a specified directory
 #' create_project_skeleton("~/path/to/github_repository_name", overwrite = FALSE)
+#' 
+#' # Create with specified name and description
+#' create_project_skeleton(
+#'   project_root = ".", 
+#'   project_name = "My Research Study",
+#'   project_description = "A longitudinal study examining cognitive development"
+#' )
 #' }
 #'
 #' @seealso [psych-DS specification](https://psych-ds.github.io/)
 #'
 #' @export
+
+# \item `tools/detect_unused_dependencies.qmd` - reproducibility tool to
+#   check whether there are unused dependencies in a project
+# \item `tools/detect_unused_objects.qmd` - reproducibility tool to
+#   check whether there are unused objects in a project
+
 create_project_skeleton <- function(project_root = "../", overwrite = FALSE, 
                                     project_name = NULL, project_description = NULL) {
   # minimal dependencies: base R only
@@ -167,7 +171,7 @@ create_project_skeleton <- function(project_root = "../", overwrite = FALSE,
   # helper for string concatenation
   `%+%` <- function(a, b) paste0(a, b)
   
-  readme_path <- join(project_root, "readme.md")
+  readme_path <- join(project_root, "README.md")
   readme_text <- paste(
     "# Project Title",
     "",
@@ -190,7 +194,7 @@ create_project_skeleton <- function(project_root = "../", overwrite = FALSE,
       "methods/              # measures, implementations (qualtrics, lab.js, psychopy files, etc.), .docx files with items, etc.\n" %+%
       "preregistration/      # preregistration documents\n" %+%
       "LICENSE               # suggested: CC BY 4.0\n" %+%
-      "readme.md             # this file\n" %+%
+      "README.md             # this file\n" %+%
       "```",
     "",
     "## Reproducibility",
@@ -317,6 +321,36 @@ create_project_skeleton <- function(project_root = "../", overwrite = FALSE,
     write_if_absent(join(project_root, rel), qmd_header(gsub("^code/|\\.qmd$", "", rel)))
   }))
   
+  # --- tools/project_validator.qmd ---
+  tools_validator_qmd_path <- join(project_root, "tools", "project_validator.qmd")
+  tools_validator_qmd_text <- paste(
+    "---",
+    'title: "Check repository compliance against psych-ds-ish standard"',
+    "format:",
+    "  html:",
+    "    toc: true",
+    "    code-fold: true",
+    "execute:",
+    "  warning: false",
+    "  message: false",
+    "---",
+    "",
+    "```{r}",
+    "",
+    "library(psychdsish)",
+    "library(knitr)",
+    "library(kableExtra)",
+    "",
+    'results <- validator("../")',
+    "",
+    "results |>",
+    "  knitr::kable() |>",
+    "  kableExtra::kable_classic(full_width = FALSE)",
+    "```",
+    sep = "\n"
+  )
+  write_if_absent(tools_validator_qmd_path, tools_validator_qmd_text)
+  
   # --- tools/style_all_files.qmd ---
   tools_style_qmd_path <- join(project_root, "tools", "style_all_files.qmd")
   tools_style_qmd_text <- paste(
@@ -343,72 +377,72 @@ create_project_skeleton <- function(project_root = "../", overwrite = FALSE,
   write_if_absent(tools_style_qmd_path, tools_style_qmd_text)
   
   
-  # --- tools/detect_unused_dependencies.qmd ---
-  tools_dependencies_qmd_path <- join(project_root, "tools", "check_unused_dependencies.qmd")
-  tools_dependencies_qmd_text <- paste(
-    "---",
-    'title: "Check if there are unused dependencies in a project"',
-    "format:",
-    "  html:",
-    "    toc: true",
-    "    code-fold: true",
-    "execute:",
-    "  warning: false",
-    "  message: false",
-    "---",
-    "",
-    "```{r}",
-    "",
-    "library(psychdsish)",
-    "library(knitr)",
-    "library(kableExtra)",
-    "",
-    "res <- check_unused_dependencies(root = '../')",
-    "",
-    "res |>",
-    "  kable() |>",
-    "  kable_classic(full_width = FALSE)",
-    "",
-    "```",
-    sep = "\n"
-  )
-  write_if_absent(tools_dependencies_qmd_path, tools_dependencies_qmd_text)
-  
-  
-  # --- tools/check_unused_objects.qmd ---
-  tools_unused_objects_qmd_path <- join(project_root, "tools", "check_unused_objects.qmd")
-  tools_unused_objects_qmd_text <- paste(
-    "---",
-    'title: "Check if there are unused objects in a project"',
-    "format:",
-    "  html:",
-    "    toc: true",
-    "    code-fold: true",
-    "execute:",
-    "  warning: false",
-    "  message: false",
-    "---",
-    "",
-    "When learning to code, it's very easy to accidentally create objects (e.g., data frames) and then never use them in your code. Sometimes, users create 'df2' from 'df1' but, later in the code, go back to calling 'df1'. These 'orphan' objects can represent errors or generally make code confusing - why create an object that is never used?",
-    "",
-    "This function lets you scan all .qmd, .Rmd, and .R files in your project for unused 'orphan' objects. If you find your project contains them, you should think about whether they're redundant and can be removed, or whether maybe you have an error (e.g., maybe subsequent code should call these objects and not others).",
-    "",
-    "```{r}",
-    "",
-    "library(psychdsish)",
-    "library(knitr)",
-    "library(kableExtra)",
-    "",
-    "res <- check_unused_objects(root = '../')",
-    "",
-    "res |>",
-    "  kable() |>",
-    "  kable_classic(full_width = FALSE)",
-    "",
-    "```",
-    sep = "\n"
-  )
-  write_if_absent(tools_unused_objects_qmd_path, tools_unused_objects_qmd_text)
+  # # --- tools/detect_unused_dependencies.qmd ---
+  # tools_dependencies_qmd_path <- join(project_root, "tools", "check_unused_dependencies.qmd")
+  # tools_dependencies_qmd_text <- paste(
+  #   "---",
+  #   'title: "Check if there are unused dependencies in a project"',
+  #   "format:",
+  #   "  html:",
+  #   "    toc: true",
+  #   "    code-fold: true",
+  #   "execute:",
+  #   "  warning: false",
+  #   "  message: false",
+  #   "---",
+  #   "",
+  #   "```{r}",
+  #   "",
+  #   "library(psychdsish)",
+  #   "library(knitr)",
+  #   "library(kableExtra)",
+  #   "",
+  #   "res <- check_unused_dependencies(root = '../')",
+  #   "",
+  #   "res |>",
+  #   "  kable() |>",
+  #   "  kable_classic(full_width = FALSE)",
+  #   "",
+  #   "```",
+  #   sep = "\n"
+  # )
+  # write_if_absent(tools_dependencies_qmd_path, tools_dependencies_qmd_text)
+  # 
+  # 
+  # # --- tools/check_unused_objects.qmd ---
+  # tools_unused_objects_qmd_path <- join(project_root, "tools", "check_unused_objects.qmd")
+  # tools_unused_objects_qmd_text <- paste(
+  #   "---",
+  #   'title: "Check if there are unused objects in a project"',
+  #   "format:",
+  #   "  html:",
+  #   "    toc: true",
+  #   "    code-fold: true",
+  #   "execute:",
+  #   "  warning: false",
+  #   "  message: false",
+  #   "---",
+  #   "",
+  #   "When learning to code, it's very easy to accidentally create objects (e.g., data frames) and then never use them in your code. Sometimes, users create 'df2' from 'df1' but, later in the code, go back to calling 'df1'. These 'orphan' objects can represent errors or generally make code confusing - why create an object that is never used?",
+  #   "",
+  #   "This function lets you scan all .qmd, .Rmd, and .R files in your project for unused 'orphan' objects. If you find your project contains them, you should think about whether they're redundant and can be removed, or whether maybe you have an error (e.g., maybe subsequent code should call these objects and not others).",
+  #   "",
+  #   "```{r}",
+  #   "",
+  #   "library(psychdsish)",
+  #   "library(knitr)",
+  #   "library(kableExtra)",
+  #   "",
+  #   "res <- check_unused_objects(root = '../')",
+  #   "",
+  #   "res |>",
+  #   "  kable() |>",
+  #   "  kable_classic(full_width = FALSE)",
+  #   "",
+  #   "```",
+  #   sep = "\n"
+  # )
+  # write_if_absent(tools_unused_objects_qmd_path, tools_unused_objects_qmd_text)
   
   
   # return a summary
@@ -421,13 +455,14 @@ create_project_skeleton <- function(project_root = "../", overwrite = FALSE,
       gitignore_path,
       gitattributes_path,
       file.path(project_root, qmd_files),
-      tools_style_qmd_path,
-      tools_dependencies_qmd_path,
-      tools_unused_objects_qmd_path
+      tools_validator_qmd_path,
+      tools_style_qmd_path
+      # tools_dependencies_qmd_path,
+      # tools_unused_objects_qmd_path
     ),
     type = c(
       rep("dir", length(paths_dir)),
-      "file", "file", "file", "file", "file", rep("file", length(qmd_files)), "file", "file", "file"
+      "file", "file", "file", "file", "file", rep("file", length(qmd_files)), "file", "file"
     )
   )
   invisible(created)
