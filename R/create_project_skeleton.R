@@ -215,7 +215,7 @@ create_project_skeleton <- function(project_root = "../", overwrite = FALSE,
   dataset_description_path <- join(project_root, "dataset_description.json")
   dataset_description_text <- paste0(
     "{\n",
-    '  "@context": "schema.org/",\n',
+    '  "@context": "https://schema.org/",\n',
     '  "@type": "Dataset",\n',
     '  "name": "', project_name, '",\n',
     '  "description": "', project_description, '",\n',
