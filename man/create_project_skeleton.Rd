@@ -56,7 +56,7 @@ The following directories are created (if not already present):
 The following files are created (if not already present):
 \itemize{
 \item \code{LICENSE} - CC BY 4.0 license text
-\item \code{readme.md} - skeleton README describing project aims and structure
+\item \code{README.md} - skeleton README describing project aims and structure
 \item \code{.gitignore} - ignores R history, session data, caches, temp files,
 OS-specific clutter, and large output directories
 \item \code{code/analysis.qmd} - Quarto analysis template with metadata, setup
@@ -64,10 +64,6 @@ chunk, and \code{sessionInfo()} chunk
 \item \code{code/processing.qmd} - Quarto processing template (same structure)
 \item \code{tools/style_all_files.qmd} - reproducibility tool to apply
 {tidyverse} code style to all \code{.qmd}, \code{.Rmd}, and \code{.R} files
-\item \code{tools/detect_unused_dependencies.qmd} - reproducibility tool to
-check whether there are unused dependencies in a project
-\item \code{tools/detect_unused_objects.qmd} - reproducibility tool to
-check whether there are unused objects in a project
 }
 
 Quarto \code{.qmd} files are pre-filled with:

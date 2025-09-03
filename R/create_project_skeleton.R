@@ -43,7 +43,7 @@
 #' The following files are created (if not already present):
 #' \itemize{
 #'   \item `LICENSE` - CC BY 4.0 license text
-#'   \item `readme.md` - skeleton README describing project aims and structure
+#'   \item `README.md` - skeleton README describing project aims and structure
 #'   \item `.gitignore` - ignores R history, session data, caches, temp files,
 #'     OS-specific clutter, and large output directories
 #'   \item `code/analysis.qmd` - Quarto analysis template with metadata, setup
@@ -51,10 +51,6 @@
 #'   \item `code/processing.qmd` - Quarto processing template (same structure)
 #'   \item `tools/style_all_files.qmd` - reproducibility tool to apply
 #'     {tidyverse} code style to all `.qmd`, `.Rmd`, and `.R` files
-#'   \item `tools/detect_unused_dependencies.qmd` - reproducibility tool to
-#'     check whether there are unused dependencies in a project
-#'   \item `tools/detect_unused_objects.qmd` - reproducibility tool to
-#'     check whether there are unused objects in a project
 #' }
 #'
 #' Quarto `.qmd` files are pre-filled with:
@@ -84,6 +80,12 @@
 #' @seealso [psych-DS specification](https://psych-ds.github.io/)
 #'
 #' @export
+
+# \item `tools/detect_unused_dependencies.qmd` - reproducibility tool to
+#   check whether there are unused dependencies in a project
+# \item `tools/detect_unused_objects.qmd` - reproducibility tool to
+#   check whether there are unused objects in a project
+
 create_project_skeleton <- function(project_root = "../", overwrite = FALSE) {
   # minimal dependencies: base R only
   join <- function(...) file.path(..., fsep = .Platform$file.sep)
@@ -140,7 +142,7 @@ create_project_skeleton <- function(project_root = "../", overwrite = FALSE) {
   # helper for string concatenation
   `%+%` <- function(a, b) paste0(a, b)
   
-  readme_path <- join(project_root, "readme.md")
+  readme_path <- join(project_root, "README.md")
   readme_text <- paste(
     "# Project Title",
     "",
@@ -163,7 +165,7 @@ create_project_skeleton <- function(project_root = "../", overwrite = FALSE) {
       "methods/              # measures, implementations (qualtrics, lab.js, psychopy files, etc.), .docx files with items, etc.\n" %+%
       "preregistration/      # preregistration documents\n" %+%
       "LICENSE               # suggested: CC BY 4.0\n" %+%
-      "readme.md             # this file\n" %+%
+      "README.md             # this file\n" %+%
       "```",
     "",
     "## Reproducibility",
@@ -277,6 +279,36 @@ create_project_skeleton <- function(project_root = "../", overwrite = FALSE) {
     write_if_absent(join(project_root, rel), qmd_header(gsub("^code/|\\.qmd$", "", rel)))
   }))
   
+  # --- tools/project_validator.qmd ---
+  tools_validator_qmd_path <- join(project_root, "tools", "project_validator.qmd")
+  tools_validator_qmd_text <- paste(
+    "---",
+    'title: "Check repository compliance against psych-ds-ish standard"',
+    "format:",
+    "  html:",
+    "    toc: true",
+    "    code-fold: true",
+    "execute:",
+    "  warning: false",
+    "  message: false",
+    "---",
+    "",
+    "```{r}",
+    "",
+    "library(psychdsish)",
+    "library(knitr)",
+    "library(kableExtra)",
+    "",
+    'results <- validator("../")',
+    "",
+    "results |>",
+    "  knitr::kable() |>",
+    "  kableExtra::kable_classic(full_width = FALSE)",
+    "```",
+    sep = "\n"
+  )
+  write_if_absent(tools_validator_qmd_path, tools_validator_qmd_text)
+  
   # --- tools/style_all_files.qmd ---
   tools_style_qmd_path <- join(project_root, "tools", "style_all_files.qmd")
   tools_style_qmd_text <- paste(
@@ -378,13 +410,14 @@ create_project_skeleton <- function(project_root = "../", overwrite = FALSE) {
       license_path,
       readme_path,
       file.path(project_root, qmd_files),
-      tools_style_qmd_path,
-      tools_dependencies_qmd_path,
-      tools_unused_objects_qmd_path
+      tools_validator_qmd_path,
+      tools_style_qmd_path
+      # tools_dependencies_qmd_path,
+      # tools_unused_objects_qmd_path
     ),
     type = c(
       rep("dir", length(paths_dir)),
-      "file", "file", rep("file", length(qmd_files)), "file", "file", "file"
+      "file", "file", rep("file", length(qmd_files)), "file", "file"
     )
   )
   invisible(created)
