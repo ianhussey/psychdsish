@@ -18,6 +18,11 @@
 #'   console.
 #' @param overwrite Logical. If `TRUE`, existing files will be overwritten.
 #'   Defaults to `FALSE`.
+#' @param project_name Character scalar. Name for the dataset. If `NULL` 
+#'   (default), the user will be prompted to enter a name interactively.
+#' @param project_description Character scalar. Description for the dataset. 
+#'   If `NULL` (default), the user will be prompted to enter a description 
+#'   interactively.
 #'
 #' @details
 #' The following directories are created (if not already present):
@@ -44,6 +49,7 @@
 #' \itemize{
 #'   \item `LICENSE` - CC BY 4.0 license text
 #'   \item `README.md` - skeleton README describing project aims and structure
+#'   \item `dataset_description.json` - JSON-LD dataset metadata file
 #'   \item `.gitignore` - ignores R history, session data, caches, temp files,
 #'     OS-specific clutter, and large output directories
 #'   \item `code/analysis.qmd` - Quarto analysis template with metadata, setup
@@ -75,6 +81,13 @@
 #' 
 #' # Create in a specified directory
 #' create_project_skeleton("~/path/to/github_repository_name", overwrite = FALSE)
+#' 
+#' # Create with specified name and description
+#' create_project_skeleton(
+#'   project_root = ".", 
+#'   project_name = "My Research Study",
+#'   project_description = "A longitudinal study examining cognitive development"
+#' )
 #' }
 #'
 #' @seealso [psych-DS specification](https://psych-ds.github.io/)
@@ -86,7 +99,8 @@
 # \item `tools/detect_unused_objects.qmd` - reproducibility tool to
 #   check whether there are unused objects in a project
 
-create_project_skeleton <- function(project_root = "../", overwrite = FALSE) {
+create_project_skeleton <- function(project_root = "../", overwrite = FALSE, 
+                                    project_name = NULL, project_description = NULL) {
   # minimal dependencies: base R only
   join <- function(...) file.path(..., fsep = .Platform$file.sep)
   mkd  <- function(p) if (!dir.exists(p)) dir.create(p, recursive = TRUE, showWarnings = FALSE)
@@ -99,6 +113,21 @@ create_project_skeleton <- function(project_root = "../", overwrite = FALSE) {
     if (file.exists(path) && !overwrite) return(invisible(FALSE))
     file.create(path)
     invisible(TRUE)
+  }
+  
+  # Prompt for project name and description if not provided
+  if (is.null(project_name)) {
+    project_name <- readline(prompt = "Enter project name: ")
+    if (project_name == "") {
+      project_name <- "Untitled Project"
+    }
+  }
+  
+  if (is.null(project_description)) {
+    project_description <- readline(prompt = "Enter project description: ")
+    if (project_description == "") {
+      project_description <- "No description provided"
+    }
   }
   
   dirs <- c(
@@ -181,6 +210,19 @@ create_project_skeleton <- function(project_root = "../", overwrite = FALSE) {
     sep = "\n"
   )
   write_if_absent(readme_path, readme_text)
+  
+  # --- dataset_description.json ---
+  dataset_description_path <- join(project_root, "dataset_description.json")
+  dataset_description_text <- paste0(
+    "{\n",
+    '  "@context": "https://schema.org/",\n',
+    '  "@type": "Dataset",\n',
+    '  "name": "', project_name, '",\n',
+    '  "description": "', project_description, '",\n',
+    '  "variableMeasured": []\n',
+    "}\n"
+  )
+  write_if_absent(dataset_description_path, dataset_description_text)
   
   # --- .gitignore ---
   gitignore_path <- join(project_root, ".gitignore")
@@ -409,6 +451,9 @@ create_project_skeleton <- function(project_root = "../", overwrite = FALSE) {
       paths_dir,
       license_path,
       readme_path,
+      dataset_description_path,
+      gitignore_path,
+      gitattributes_path,
       file.path(project_root, qmd_files),
       tools_validator_qmd_path,
       tools_style_qmd_path
@@ -417,7 +462,7 @@ create_project_skeleton <- function(project_root = "../", overwrite = FALSE) {
     ),
     type = c(
       rep("dir", length(paths_dir)),
-      "file", "file", rep("file", length(qmd_files)), "file", "file"
+      "file", "file", "file", "file", "file", rep("file", length(qmd_files)), "file", "file"
     )
   )
   invisible(created)
