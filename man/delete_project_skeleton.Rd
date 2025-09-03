@@ -2,49 +2,83 @@
 % Please edit documentation in R/delete_project_skeleton.R
 \name{delete_project_skeleton}
 \alias{delete_project_skeleton}
-\title{Delete all files and folders in a project, except a specified directory}
+\title{Delete a project skeleton while protecting the running file}
 \usage{
-delete_project_skeleton(project_root = "../", keep_dir = "tools")
+delete_project_skeleton(
+  project_root = "../",
+  require_sentinel = TRUE,
+  sentinel_names = c(".ok-to-prune", ".git", ".gitignore", ".here", "_project.yml",
+    "_quarto.yml"),
+  confirm = TRUE,
+  dry_run = FALSE,
+  large_n_warn = 10000
+)
 }
 \arguments{
-\item{project_root}{Character scalar. Path to the root directory of the
-project to clean. Defaults to \code{"../"} on the assumption it is being
-run from "project_name/tools/project_creator.qmd". Must exist.}
+\item{project_root}{Path to the project folder whose contents should
+be deleted. Defaults to \code{"../"}.}
 
-\item{keep_dir}{Character scalar. Name of the directory (relative to
-\code{project_root}) to preserve. Defaults to \code{"tools"} on the assumption
-it is being run from "project_name/tools/project_creator.qmd".
-If the directory does not exist, it will simply be ignored.}
+\item{require_sentinel}{Logical. If \code{TRUE} (default), at least one of
+the files listed in \code{sentinel_names} must exist in the project root,
+otherwise the function aborts.}
+
+\item{sentinel_names}{Character vector of sentinel filenames checked
+when \code{require_sentinel = TRUE}. Defaults include \code{.ok-to-prune},
+\code{.git}, \code{.here}, \verb{_project.yml}, and \verb{_quarto.yml}.}
+
+\item{confirm}{Logical. If \code{TRUE} (default), asks the user to confirm
+the deletion interactively by typing the folder name. In
+non-interactive sessions this must be set to \code{FALSE} to proceed.}
+
+\item{dry_run}{Logical. If \code{TRUE}, only reports what would be deleted
+without actually deleting files. Default is \code{FALSE}.}
+
+\item{large_n_warn}{Integer. Threshold number of items that triggers
+an additional confirmation prompt. Default is \code{10000}.}
 }
 \value{
-Invisibly returns \code{NULL}. Prints a message listing deleted items or noting
-that nothing was deleted.
+Invisibly returns \code{NULL} (after deleting) or a list with
+estimated deletion counts when \code{dry_run = TRUE}.
 }
 \description{
-This function removes ALL files and folders inside a given project root,
-including the .git folder (!), except for a single directory that you
-choose to preserve. It is useful for quickly clearing a project created by
-\code{create_project_skeleton()} while keeping reusable tools
-(e.g., helper scripts containing \code{create_project_skeleton()}, in /tools)
-intact. I use it mostly for testing \code{create_project_skeleton()}.
+This function deletes the contents of a project folder, but protects
+the file from which it is being executed (and the minimal set of
+ancestor directories required to keep that file). It is intended for
+cleaning out automatically generated project skeletons while leaving
+the active script or Quarto/Rmd file intact.
 }
 \details{
+Several safety mechanisms are built in to reduce the risk of
+catastrophic deletion:
+
 \itemize{
-\item All files and folders in \code{project_root} will be deleted except the
-one specified in \code{keep_dir}.
-\item The function uses \code{unlink()} for recursive deletion, so \strong{deleted
-items cannot be recovered} unless under version control.
-\item Hidden files (e.g., \code{.gitignore}, \code{.Rhistory}) are also removed unless
-they are inside \code{keep_dir}.
+\item Refuses to operate on filesystem roots (e.g., \code{/} or \verb{C:/}).
+\item Optionally requires a sentinel file (e.g., \code{.ok-to-prune})
+or other project marker in the target directory.
+\item Displays an interactive confirmation prompt requiring the
+exact folder name to be typed.
+\item Aborts in non-interactive sessions unless \code{confirm = FALSE}
+is set explicitly.
+\item Supports a dry-run mode to preview deletions.
+\item Issues an extra confirmation if the number of items to be
+deleted is very large.
 }
 }
+\section{Warning}{
+
+Deletion is irreversible. Always test with \code{dry_run = TRUE} first, and
+keep \code{require_sentinel = TRUE} and \code{confirm = TRUE} for normal use.
+}
+
 \examples{
 \dontrun{
-# Delete everything in the parent directory except the 'tools' folder
-delete_project_skeleton(project_root = "../", keep_dir = "tools")
+# Preview what would be deleted from a skeleton project
+delete_project_skeleton("my_project", dry_run = TRUE)
 
-# Delete everything except 'scripts'
-delete_project_skeleton(project_root = ".", keep_dir = "scripts")
+# Actually delete (interactive confirmation required)
+delete_project_skeleton("my_project")
+
+# Non-interactive usage (e.g., in CI), requires confirm = FALSE
+delete_project_skeleton("my_project", confirm = FALSE)
 }
-
 }
