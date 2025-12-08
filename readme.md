@@ -129,7 +129,7 @@ github_repository_name/
 └── reports/
 ```
 
-
+# tools folder with the creator validator files is created but the tools path is not in the above sceletton or the readme created by the project_creator
 
 ## Validation rules checked by `validator()`
 
