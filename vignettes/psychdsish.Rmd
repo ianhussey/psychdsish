@@ -1,0 +1,122 @@
+---
+title: "Get started with psychdsish"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Get started with psychdsish}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+library(psychdsish)
+```
+
+`psychdsish` helps you set up and check research projects that follow a
+standardised, reproducibility-friendly layout. The layout is loosely inspired
+by the [psych-DS](https://psych-ds.github.io/) data standard, but is
+deliberately *not* fully psych-DS compliant -- most notably it drops the JSON
+metadata requirement. Hence *psych-DS-ish*.
+
+There are three things you will usually do:
+
+1. **Create** a project skeleton with `create_project_skeleton()`.
+2. **Validate** an existing project against the conventions with `validator()`.
+3. (rarely, and mainly for testing) **Delete** a skeleton with
+   `delete_project_skeleton()`.
+
+## Creating a project skeleton
+
+`create_project_skeleton()` writes an opinionated directory tree together with a
+`README`, a licence, a `.gitignore` with sensible defaults, and Quarto
+templates for processing and analysis code.
+
+If you know the path to your project you can call it directly from the console:
+
+```{r, eval = FALSE}
+create_project_skeleton(project_root = "~/git/my_project")
+```
+
+The default `project_root = "../"` assumes you are running it from a
+`project_name/tools/project_creator.qmd` file, so that the skeleton is written
+to the project root one level up.
+
+Here is a complete, self-contained round-trip inside a temporary directory:
+
+```{r}
+project <- file.path(tempdir(), "demo_project")
+
+create_project_skeleton(project_root = project, overwrite = TRUE)
+
+# the top-level layout that was created
+list.dirs(project, recursive = FALSE, full.names = FALSE)
+```
+
+The skeleton separates raw data, processed data, analysis code, outputs, and
+documentation:
+
+```text
+my_project/
+├── .gitattributes
+├── .gitignore
+├── LICENSE
+├── README.md
+├── code/
+│   ├── analysis.qmd
+│   └── processing.qmd
+├── data/
+│   ├── outputs/
+│   │   ├── fitted_models/
+│   │   ├── plots/
+│   │   └── results/
+│   ├── processed/
+│   └── raw/
+├── methods/
+├── preregistration/
+└── reports/
+```
+
+## Validating a project
+
+`validator()` checks a project against the psych-DS-ish conventions and returns
+a table of tests, each marked `PASS` or `FAIL`, with guidance on how to fix any
+failures. A freshly created skeleton passes every test:
+
+```{r}
+res <- validator(project_root = project)
+res
+```
+
+The rules cover, among other things, which directories must exist, where each
+file type is allowed to live (for example, data files under `data/`, scripts
+under `code/` or `tools/`), and that filenames contain no spaces. See
+`?validator` for the full set of rules.
+
+## Deleting a skeleton
+
+`delete_project_skeleton()` exists mainly for testing. It is deliberately
+cautious: by default it requires interactive confirmation and the presence of a
+"sentinel" file (such as `.gitignore`) so that you cannot point it at an
+arbitrary directory by accident. Always preview with `dry_run = TRUE` first.
+
+```{r}
+# preview only -- nothing is removed
+invisible(delete_project_skeleton(project_root = project, confirm = FALSE, dry_run = TRUE))
+
+# actually remove the demo project (non-interactive)
+delete_project_skeleton(project_root = project, confirm = FALSE)
+
+dir.exists(project)
+```
+
+## Where to go next
+
+- `?create_project_skeleton` for every directory and template that is created.
+- `?validator` for the complete list of validation rules.
+- The package also ships small helpers for tidying code style
+  (`style_all_files()`, `print_poorly_styled_code()`) and for spotting unused
+  dependencies and objects (`check_unused_dependencies()`,
+  `check_unused_objects()`).

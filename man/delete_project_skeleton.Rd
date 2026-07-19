@@ -63,6 +63,13 @@ is set explicitly.
 \item Issues an extra confirmation if the number of items to be
 deleted is very large.
 }
+
+As an additional safeguard the function must be able to identify the file it
+is being called from (via knitr/Quarto, RStudio, or \verb{Rscript --file=}) so
+that it never deletes the running script or its parent directories. It is
+therefore intended to be run from a script such as
+\code{tools/project_validator.qmd} rather than from a bare interactive console,
+and it aborts if the current file cannot be determined.
 }
 \section{Warning}{
 
@@ -72,13 +79,15 @@ keep \code{require_sentinel = TRUE} and \code{confirm = TRUE} for normal use.
 
 \examples{
 \dontrun{
+# Run from a script inside the project (e.g. tools/project_validator.qmd).
+
 # Preview what would be deleted from a skeleton project
 delete_project_skeleton("my_project", dry_run = TRUE)
 
 # Actually delete (interactive confirmation required)
 delete_project_skeleton("my_project")
 
-# Non-interactive usage (e.g., in CI), requires confirm = FALSE
+# Skip the interactive prompt (still requires a detectable current file)
 delete_project_skeleton("my_project", confirm = FALSE)
 }
 }

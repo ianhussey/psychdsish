@@ -12,8 +12,8 @@
 #' defaults for licensing, reproducibility, and version control.
 #'
 #' @param project_root Character scalar. Path to the root directory where
-#'   the project skeleton should be created. Defaults to `"../"` on the 
-#'   assumption that this function is run from 
+#'   the project skeleton should be created. Defaults to `"../"` on the
+#'   assumption that this function is run from
 #'   "project_name/tools/project_creator.qmd", but can also be run from the
 #'   console.
 #' @param overwrite Logical. If `TRUE`, existing files will be overwritten.
@@ -50,7 +50,7 @@
 #'     chunk, and `sessionInfo()` chunk
 #'   \item `code/processing.qmd` - Quarto processing template (same structure)
 #'   \item `tools/style_all_files.qmd` - reproducibility tool to apply
-#'     {tidyverse} code style to all `.qmd`, `.Rmd`, and `.R` files
+#'     tidyverse code style to all `.qmd`, `.Rmd`, and `.R` files
 #' }
 #'
 #' Quarto `.qmd` files are pre-filled with:
@@ -72,7 +72,7 @@
 #'
 #' # Create in the current working directory and overwrite any existing templates
 #' create_project_skeleton(project_root = ".", overwrite = TRUE)
-#' 
+#'
 #' # Create in a specified directory
 #' create_project_skeleton("~/path/to/github_repository_name", overwrite = FALSE)
 #' }
@@ -89,18 +89,24 @@
 create_project_skeleton <- function(project_root = "../", overwrite = FALSE) {
   # minimal dependencies: base R only
   join <- function(...) file.path(..., fsep = .Platform$file.sep)
-  mkd  <- function(p) if (!dir.exists(p)) dir.create(p, recursive = TRUE, showWarnings = FALSE)
+  mkd <- function(p) {
+    if (!dir.exists(p)) dir.create(p, recursive = TRUE, showWarnings = FALSE)
+  }
   write_if_absent <- function(path, text) {
-    if (file.exists(path) && !overwrite) return(invisible(FALSE))
+    if (file.exists(path) && !overwrite) {
+      return(invisible(FALSE))
+    }
     cat(text, file = path)
     invisible(TRUE)
   }
   touch <- function(path) {
-    if (file.exists(path) && !overwrite) return(invisible(FALSE))
+    if (file.exists(path) && !overwrite) {
+      return(invisible(FALSE))
+    }
     file.create(path)
     invisible(TRUE)
   }
-  
+
   dirs <- c(
     "code",
     "reports",
@@ -113,13 +119,13 @@ create_project_skeleton <- function(project_root = "../", overwrite = FALSE) {
     "data/outputs/results",
     "methods",
     "preregistration",
-    "tools"                      # <- added to ensure the tools dir exists
+    "tools" # <- added to ensure the tools dir exists
   )
-  
+
   # create all directories
   paths_dir <- file.path(project_root, dirs)
   invisible(lapply(paths_dir, mkd))
-  
+
   # --- files: LICENSE (CC BY 4.0) & README ---
   license_path <- join(project_root, "LICENSE")
   license_text <- paste(
@@ -138,10 +144,10 @@ create_project_skeleton <- function(project_root = "../", overwrite = FALSE) {
     sep = "\n"
   )
   write_if_absent(license_path, license_text)
-  
+
   # helper for string concatenation
   `%+%` <- function(a, b) paste0(a, b)
-  
+
   readme_path <- join(project_root, "README.md")
   readme_text <- paste(
     "# Project Title",
@@ -181,7 +187,7 @@ create_project_skeleton <- function(project_root = "../", overwrite = FALSE) {
     sep = "\n"
   )
   write_if_absent(readme_path, readme_text)
-  
+
   # --- .gitignore ---
   gitignore_path <- join(project_root, ".gitignore")
   gitignore_text <- paste(
@@ -215,7 +221,7 @@ create_project_skeleton <- function(project_root = "../", overwrite = FALSE) {
     sep = "\n"
   )
   write_if_absent(gitignore_path, gitignore_text)
-  
+
   # --- .gitattributes ---
   gitattributes_path <- join(project_root, ".gitattributes")
   gitattributes_text <- paste(
@@ -227,17 +233,25 @@ create_project_skeleton <- function(project_root = "../", overwrite = FALSE) {
     sep = "\n"
   )
   write_if_absent(gitattributes_path, gitattributes_text)
-  
+
   # --- empty .qmd stubs ---
   qmd_files <- c(
     "code/analysis.qmd",
     "code/processing.qmd"
   )
   qmd_header <- function(title) {
-    project_root_norm <- normalizePath(project_root, winslash = "/", mustWork = FALSE)
+    project_root_norm <- normalizePath(
+      project_root,
+      winslash = "/",
+      mustWork = FALSE
+    )
     title_norm <- normalizePath(title, winslash = "/", mustWork = FALSE)
     if (startsWith(title_norm, project_root_norm)) {
-      title_clean <- substr(title_norm, nchar(project_root_norm) + 2, nchar(title_norm))
+      title_clean <- substr(
+        title_norm,
+        nchar(project_root_norm) + 2,
+        nchar(title_norm)
+      )
     } else {
       title_clean <- title
     }
@@ -245,7 +259,9 @@ create_project_skeleton <- function(project_root = "../", overwrite = FALSE) {
     title_clean <- sub("\\.qmd$", "", title_clean)
     paste0(
       "---\n",
-      "title: \"", title_clean, "\"\n",
+      "title: \"",
+      title_clean,
+      "\"\n",
       "author: \"author\"\n",
       "date: today\n",
       "format:\n",
@@ -276,11 +292,18 @@ create_project_skeleton <- function(project_root = "../", overwrite = FALSE) {
     )
   }
   invisible(lapply(qmd_files, function(rel) {
-    write_if_absent(join(project_root, rel), qmd_header(gsub("^code/|\\.qmd$", "", rel)))
+    write_if_absent(
+      join(project_root, rel),
+      qmd_header(gsub("^code/|\\.qmd$", "", rel))
+    )
   }))
-  
+
   # --- tools/project_validator.qmd ---
-  tools_validator_qmd_path <- join(project_root, "tools", "project_validator.qmd")
+  tools_validator_qmd_path <- join(
+    project_root,
+    "tools",
+    "project_validator.qmd"
+  )
   tools_validator_qmd_text <- paste(
     "---",
     'title: "Check repository compliance against psych-ds-ish standard"',
@@ -308,7 +331,7 @@ create_project_skeleton <- function(project_root = "../", overwrite = FALSE) {
     sep = "\n"
   )
   write_if_absent(tools_validator_qmd_path, tools_validator_qmd_text)
-  
+
   # --- tools/style_all_files.qmd ---
   tools_style_qmd_path <- join(project_root, "tools", "style_all_files.qmd")
   tools_style_qmd_text <- paste(
@@ -333,8 +356,7 @@ create_project_skeleton <- function(project_root = "../", overwrite = FALSE) {
     sep = "\n"
   )
   write_if_absent(tools_style_qmd_path, tools_style_qmd_text)
-  
-  
+
   # # --- tools/detect_unused_dependencies.qmd ---
   # tools_dependencies_qmd_path <- join(project_root, "tools", "check_unused_dependencies.qmd")
   # tools_dependencies_qmd_text <- paste(
@@ -365,8 +387,8 @@ create_project_skeleton <- function(project_root = "../", overwrite = FALSE) {
   #   sep = "\n"
   # )
   # write_if_absent(tools_dependencies_qmd_path, tools_dependencies_qmd_text)
-  # 
-  # 
+  #
+  #
   # # --- tools/check_unused_objects.qmd ---
   # tools_unused_objects_qmd_path <- join(project_root, "tools", "check_unused_objects.qmd")
   # tools_unused_objects_qmd_text <- paste(
@@ -401,8 +423,7 @@ create_project_skeleton <- function(project_root = "../", overwrite = FALSE) {
   #   sep = "\n"
   # )
   # write_if_absent(tools_unused_objects_qmd_path, tools_unused_objects_qmd_text)
-  
-  
+
   # return a summary
   created <- data.frame(
     path = c(
@@ -417,7 +438,11 @@ create_project_skeleton <- function(project_root = "../", overwrite = FALSE) {
     ),
     type = c(
       rep("dir", length(paths_dir)),
-      "file", "file", rep("file", length(qmd_files)), "file", "file"
+      "file",
+      "file",
+      rep("file", length(qmd_files)),
+      "file",
+      "file"
     )
   )
   invisible(created)

@@ -1,4 +1,3 @@
-#' psychdsish
-#'
+#' @keywords internal
+#' @importFrom utils globalVariables
 "_PACKAGE"
-#> [1] "_PACKAGE"

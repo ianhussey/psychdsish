@@ -4,11 +4,20 @@
 \name{psychdsish-package}
 \alias{psychdsish}
 \alias{psychdsish-package}
-\title{psychdsish}
+\title{psychdsish: Create and Validate 'psych-DS'-Inspired Project Structures}
 \description{
-An R package for creating an R/tidyverse project skeleton that is closely, but not entirely, compliant-ish with the [psych-DS standard](https://psych-ds.github.io/) standard for psychological data, and check whether a given project is compliant-ish with psych-DS. Hence, psych-DS-ish. The layout is loosely inspired by the psych-DS specification, but is not fully psych-DS compliant as it does not comply with psych-ds's .json requirement. Psych-ds-ish also adds extra conventions for reproducibility and common tidyverse workflows, including generating Quarto file templates, a readme, license, and a .gitignore file.
+Creates a standardised R project skeleton that is loosely inspired by the 'psych-DS' data standard (\url{https://psych-ds.github.io/}) for psychological data, and checks whether an existing project follows the same conventions. The layout is not fully 'psych-DS' compliant -- most notably it drops the JSON metadata requirement -- hence 'psych-DS-ish'. Alongside the directory structure it generates Quarto templates, a README, a licence, and a '.gitignore' with sensible defaults, and adds extra conventions for reproducibility and common 'tidyverse' workflows. A validator function reports whether a project follows the conventions and, where it does not, how to fix it.
+}
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/ianhussey/psychdsish}
+  \item Report bugs at \url{https://github.com/ianhussey/psychdsish/issues}
+}
+
 }
 \author{
 \strong{Maintainer}: Ian Hussey \email{ian.hussey@unibe.ch} (\href{https://orcid.org/0000-0001-8906-7559}{ORCID})
 
 }
+\keyword{internal}

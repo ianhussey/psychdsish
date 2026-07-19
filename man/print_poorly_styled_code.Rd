@@ -19,7 +19,7 @@ demonstrations of code style tools such as \code{\link[styler:style_text]{styler
 \details{
 The printed code:
 \itemize{
-\item Loads {dplyr}, {ggplot2}, and {stringr}.
+\item Loads \code{dplyr}, \code{ggplot2}, and \code{stringr}.
 \item Performs grouping, summarisation, filtering, joining, and plotting on
 the built-in \code{mtcars} dataset.
 \item Is deliberately badly formatted (inconsistent spacing, misaligned pipes,

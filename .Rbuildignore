@@ -1,0 +1,11 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+^build\.r$
+^\.Rhistory$
+^\.github$
+^cran-comments\.md$
+^\.DS_Store$
+^.*/\.DS_Store$
+^LICENSE\.md$
+^doc$
+^Meta$

@@ -45,50 +45,86 @@
 #' Deletion is irreversible. Always test with `dry_run = TRUE` first, and
 #' keep `require_sentinel = TRUE` and `confirm = TRUE` for normal use.
 #'
+#' @details
+#' As an additional safeguard the function must be able to identify the file it
+#' is being called from (via knitr/Quarto, RStudio, or `Rscript --file=`) so
+#' that it never deletes the running script or its parent directories. It is
+#' therefore intended to be run from a script such as
+#' `tools/project_validator.qmd` rather than from a bare interactive console,
+#' and it aborts if the current file cannot be determined.
+#'
 #' @examples
 #' \dontrun{
+#' # Run from a script inside the project (e.g. tools/project_validator.qmd).
+#'
 #' # Preview what would be deleted from a skeleton project
 #' delete_project_skeleton("my_project", dry_run = TRUE)
 #'
 #' # Actually delete (interactive confirmation required)
 #' delete_project_skeleton("my_project")
 #'
-#' # Non-interactive usage (e.g., in CI), requires confirm = FALSE
+#' # Skip the interactive prompt (still requires a detectable current file)
 #' delete_project_skeleton("my_project", confirm = FALSE)
 #' }
 #' @export
 delete_project_skeleton <- function(
-    project_root = "../",
-    require_sentinel = TRUE,
-    sentinel_names = c(".ok-to-prune", ".git", ".gitignore", ".here", "_project.yml", "_quarto.yml"),
-    confirm = TRUE,
-    dry_run = FALSE,
-    large_n_warn = 10000
+  project_root = "../",
+  require_sentinel = TRUE,
+  sentinel_names = c(
+    ".ok-to-prune",
+    ".git",
+    ".gitignore",
+    ".here",
+    "_project.yml",
+    "_quarto.yml"
+  ),
+  confirm = TRUE,
+  dry_run = FALSE,
+  large_n_warn = 10000
 ) {
   # ---------- helpers ----------
   normalize_safe <- function(p, mustWork = FALSE) {
-    tryCatch(normalizePath(p, mustWork = mustWork), error = function(e) NA_character_)
+    tryCatch(normalizePath(p, mustWork = mustWork), error = function(e) {
+      NA_character_
+    })
   }
   same_path <- function(a, b) {
-    aa <- normalize_safe(a, mustWork = FALSE); bb <- normalize_safe(b, mustWork = FALSE); isTRUE(aa == bb)
+    aa <- normalize_safe(a, mustWork = FALSE)
+    bb <- normalize_safe(b, mustWork = FALSE)
+    isTRUE(aa == bb)
   }
   is_windows <- function() .Platform$OS.type == "windows"
   is_fs_root <- function(p) {
     p <- normalize_safe(p, mustWork = FALSE)
-    if (is.na(p)) return(FALSE)
-    if (!is_windows()) return(p == "/")
+    if (is.na(p)) {
+      return(FALSE)
+    }
+    if (!is_windows()) {
+      return(p == "/")
+    }
     # Windows drive root like C:\ or C:/ ; also UNC share root like \\server\share\
-    grepl("^[A-Za-z]:[\\\\/]?$", p) || grepl("^\\\\\\\\[^\\\\]+\\\\[^\\\\]+[\\\\/]?$", p)
+    grepl("^[A-Za-z]:[\\\\/]?$", p) ||
+      grepl("^\\\\\\\\[^\\\\]+\\\\[^\\\\]+[\\\\/]?$", p)
   }
   is_subpath <- function(child, parent) {
-    child <- normalize_safe(child, mustWork = FALSE); parent <- normalize_safe(parent, mustWork = FALSE)
-    if (anyNA(c(child, parent))) return(FALSE)
+    child <- normalize_safe(child, mustWork = FALSE)
+    parent <- normalize_safe(parent, mustWork = FALSE)
+    if (anyNA(c(child, parent))) {
+      return(FALSE)
+    }
     sep <- .Platform$file.sep
     startsWith(paste0(child, sep), paste0(parent, sep))
   }
   path_depth <- function(paths) {
-    vapply(strsplit(normalize_safe(paths, mustWork = FALSE), .Platform$file.sep, fixed = TRUE),
-           function(x) sum(nzchar(x)), integer(1))
+    vapply(
+      strsplit(
+        normalize_safe(paths, mustWork = FALSE),
+        .Platform$file.sep,
+        fixed = TRUE
+      ),
+      function(x) sum(nzchar(x)),
+      integer(1)
+    )
   }
   ancestor_chain <- function(path, stop_at) {
     out <- character(0)
@@ -96,86 +132,160 @@ delete_project_skeleton <- function(
     stop_at <- normalize_safe(stop_at, mustWork = FALSE)
     while (!is.na(cur) && nzchar(cur) && !same_path(cur, stop_at)) {
       out <- c(out, cur)
-      nxt <- dirname(cur); if (identical(nxt, cur)) break
+      nxt <- dirname(cur)
+      if (identical(nxt, cur)) {
+        break
+      }
       cur <- nxt
     }
-    if (!is.na(stop_at) && nzchar(stop_at)) out <- c(out, stop_at)
+    if (!is.na(stop_at) && nzchar(stop_at)) {
+      out <- c(out, stop_at)
+    }
     unique(out)
   }
   detect_current_file <- function() {
     # 1) knitr/quarto
-    cf <- tryCatch({
-      if (isTRUE(getOption("knitr.in.progress"))) {
-        p <- knitr::current_input(); if (nzchar(p)) return(normalize_safe(p, mustWork = FALSE))
-      }
-      NA_character_
-    }, error = function(e) NA_character_)
+    cf <- tryCatch(
+      {
+        if (isTRUE(getOption("knitr.in.progress"))) {
+          p <- knitr::current_input()
+          if (nzchar(p)) return(normalize_safe(p, mustWork = FALSE))
+        }
+        NA_character_
+      },
+      error = function(e) NA_character_
+    )
     # 2) RStudio
-    if (is.na(cf)) cf <- tryCatch({
-      if (requireNamespace("rstudioapi", quietly = TRUE) && rstudioapi::isAvailable()) {
-        p <- rstudioapi::getActiveDocumentContext()$path
-        if (nzchar(p)) return(normalize_safe(p, mustWork = FALSE))
-      }
-      NA_character_
-    }, error = function(e) NA_character_)
+    if (is.na(cf)) {
+      cf <- tryCatch(
+        {
+          if (
+            requireNamespace("rstudioapi", quietly = TRUE) &&
+              rstudioapi::isAvailable()
+          ) {
+            p <- rstudioapi::getActiveDocumentContext()$path
+            if (nzchar(p)) return(normalize_safe(p, mustWork = FALSE))
+          }
+          NA_character_
+        },
+        error = function(e) NA_character_
+      )
+    }
     # 3) Rscript --file=
-    if (is.na(cf)) cf <- tryCatch({
-      ca <- commandArgs(trailingOnly = FALSE)
-      m <- grep("^--file=", ca)
-      if (length(m) > 0) return(normalize_safe(sub("^--file=", "", ca[m[1]]), mustWork = FALSE))
-      NA_character_
-    }, error = function(e) NA_character_)
+    if (is.na(cf)) {
+      cf <- tryCatch(
+        {
+          ca <- commandArgs(trailingOnly = FALSE)
+          m <- grep("^--file=", ca)
+          if (length(m) > 0) {
+            return(normalize_safe(
+              sub("^--file=", "", ca[m[1]]),
+              mustWork = FALSE
+            ))
+          }
+          NA_character_
+        },
+        error = function(e) NA_character_
+      )
+    }
     # 4) source() / sys.frames
-    if (is.na(cf)) cf <- tryCatch({
-      of <- get0("ofile", envir = sys.frames()[[1]], ifnotfound = NULL)
-      if (!is.null(of) && nzchar(of)) return(normalize_safe(of, mustWork = FALSE))
-      NA_character_
-    }, error = function(e) NA_character_)
+    if (is.na(cf)) {
+      cf <- tryCatch(
+        {
+          of <- get0("ofile", envir = sys.frames()[[1]], ifnotfound = NULL)
+          if (!is.null(of) && nzchar(of)) {
+            return(normalize_safe(of, mustWork = FALSE))
+          }
+          NA_character_
+        },
+        error = function(e) NA_character_
+      )
+    }
     cf
   }
-  
+
   # ---------- pre-flight safety ----------
   project_root <- normalize_safe(project_root, mustWork = TRUE)
-  if (is.na(project_root)) stop("`project_root` does not exist.")
-  
+  if (is.na(project_root)) {
+    stop("`project_root` does not exist.")
+  }
+
   if (is_fs_root(project_root)) {
     stop("Refusing to operate on a filesystem root: ", project_root)
   }
-  
+
   if (require_sentinel) {
     has_sentinel <- any(file.exists(file.path(project_root, sentinel_names)))
     if (!has_sentinel) {
-      stop("Safety check failed: none of the sentinel files found in `project_root`.\n",
-           "Create one of: ", paste(sentinel_names, collapse = ", "), " or set `require_sentinel = FALSE` (not recommended).")
+      stop(
+        "Safety check failed: none of the sentinel files found in `project_root`.\n",
+        "Create one of: ",
+        paste(sentinel_names, collapse = ", "),
+        " or set `require_sentinel = FALSE` (not recommended)."
+      )
     }
   }
-  
+
   current_file <- detect_current_file()
   if (is.na(current_file)) {
-    stop("Could not detect the current file; aborting to avoid accidental deletion.")
+    stop(
+      "Could not detect the current file; aborting to avoid accidental deletion."
+    )
   }
-  
-  entries <- list.files(project_root, full.names = TRUE, all.files = TRUE, no.. = TRUE)
-  if (!length(entries)) { message("Nothing to delete."); return(invisible(NULL)) }
-  
+
+  entries <- list.files(
+    project_root,
+    full.names = TRUE,
+    all.files = TRUE,
+    no.. = TRUE
+  )
+  if (!length(entries)) {
+    message("Nothing to delete.")
+    return(invisible(NULL))
+  }
+
   # Count prospective deletions for warnings / confirmation text
   prospective_deleted <- (function() {
     count <- 0L
     for (e in entries) {
       e_norm <- normalize_safe(e, mustWork = FALSE)
-      if (is.na(e_norm)) next
+      if (is.na(e_norm)) {
+        next
+      }
       if (dir.exists(e_norm)) {
         if (!is_subpath(current_file, e_norm)) {
           # whole dir
-          count <- count + length(list.files(e_norm, all.files = TRUE, recursive = TRUE, include.dirs = TRUE, no.. = TRUE)) + 1L
+          count <- count +
+            length(list.files(
+              e_norm,
+              all.files = TRUE,
+              recursive = TRUE,
+              include.dirs = TRUE,
+              no.. = TRUE
+            )) +
+            1L
         } else {
           # selective inside
-          nested <- list.files(e_norm, full.names = TRUE, all.files = TRUE, recursive = TRUE, include.dirs = TRUE, no.. = TRUE)
+          nested <- list.files(
+            e_norm,
+            full.names = TRUE,
+            all.files = TRUE,
+            recursive = TRUE,
+            include.dirs = TRUE,
+            no.. = TRUE
+          )
           if (length(nested)) {
-            keep_flags <- vapply(nested, function(p) {
-              p_norm <- normalize_safe(p, mustWork = FALSE)
-              isTRUE(same_path(p_norm, current_file) || is_subpath(current_file, p_norm))
-            }, logical(1))
+            keep_flags <- vapply(
+              nested,
+              function(p) {
+                p_norm <- normalize_safe(p, mustWork = FALSE)
+                isTRUE(
+                  same_path(p_norm, current_file) ||
+                    is_subpath(current_file, p_norm)
+                )
+              },
+              logical(1)
+            )
             count <- count + sum(!keep_flags)
           }
         }
@@ -185,20 +295,28 @@ delete_project_skeleton <- function(
     }
     count
   })()
-  
+
   # Interactive confirmation
   if (confirm) {
     if (!interactive()) {
-      stop("Confirmation required but session is non-interactive. Run interactively or set `confirm = FALSE` (only if you are sure).")
+      stop(
+        "Confirmation required but session is non-interactive. Run interactively or set `confirm = FALSE` (only if you are sure)."
+      )
     }
     cat(
       sprintf(
         "Are you sure you want to delete EVERYTHING inside:\n  %s\n(except the running file and the minimal directories needed to keep it)\n",
         project_root
       ),
-      sprintf("Prospective deletions: ~%s items.\n", format(prospective_deleted, big.mark = ",")),
+      sprintf(
+        "Prospective deletions: ~%s items.\n",
+        format(prospective_deleted, big.mark = ",")
+      ),
       "This cannot be undone.\n",
-      sprintf("To proceed, type the folder name exactly: \"%s\"\n> ", basename(project_root)),
+      sprintf(
+        "To proceed, type the folder name exactly: \"%s\"\n> ",
+        basename(project_root)
+      ),
       sep = ""
     )
     ans <- readline()
@@ -206,35 +324,58 @@ delete_project_skeleton <- function(
       stop("Confirmation failed. Aborting without deleting.")
     }
     if (prospective_deleted >= large_n_warn) {
-      ans2 <- readline(sprintf("This is a very large deletion (>= %d items). Type 'YES' to proceed: ", large_n_warn))
-      if (!identical(ans2, "YES")) stop("Large-deletion confirmation failed. Aborting.")
+      ans2 <- readline(sprintf(
+        "This is a very large deletion (>= %d items). Type 'YES' to proceed: ",
+        large_n_warn
+      ))
+      if (!identical(ans2, "YES")) {
+        stop("Large-deletion confirmation failed. Aborting.")
+      }
     }
   }
-  
+
   if (dry_run) {
     message("Dry run: no files deleted. Set `dry_run = FALSE` to execute.")
-    return(invisible(list(project_root = project_root, estimated_deletions = prospective_deleted)))
+    return(invisible(list(
+      project_root = project_root,
+      estimated_deletions = prospective_deleted
+    )))
   }
-  
+
   # ---------- deletion (same logic as before, with protections) ----------
   deleted <- character(0)
-  
+
   for (e in entries) {
     e_norm <- normalize_safe(e, mustWork = FALSE)
-    if (is.na(e_norm)) next
-    
+    if (is.na(e_norm)) {
+      next
+    }
+
     if (dir.exists(e_norm)) {
       if (!is_subpath(current_file, e_norm)) {
         unlink(e_norm, recursive = TRUE, force = TRUE)
         deleted <- c(deleted, e_norm)
       } else {
-        nested <- list.files(e_norm, full.names = TRUE, all.files = TRUE,
-                             recursive = TRUE, include.dirs = TRUE, no.. = TRUE)
+        nested <- list.files(
+          e_norm,
+          full.names = TRUE,
+          all.files = TRUE,
+          recursive = TRUE,
+          include.dirs = TRUE,
+          no.. = TRUE
+        )
         if (length(nested)) {
-          keep_flags <- vapply(nested, function(p) {
-            p_norm <- normalize_safe(p, mustWork = FALSE)
-            isTRUE(same_path(p_norm, current_file) || is_subpath(current_file, p_norm))
-          }, logical(1))
+          keep_flags <- vapply(
+            nested,
+            function(p) {
+              p_norm <- normalize_safe(p, mustWork = FALSE)
+              isTRUE(
+                same_path(p_norm, current_file) ||
+                  is_subpath(current_file, p_norm)
+              )
+            },
+            logical(1)
+          )
           to_delete <- nested[!keep_flags]
           if (length(to_delete)) {
             to_delete <- to_delete[order(-path_depth(to_delete))]
@@ -256,7 +397,7 @@ delete_project_skeleton <- function(
       }
     }
   }
-  
+
   if (length(deleted)) {
     message("Deleted: ", paste(basename(deleted), collapse = ", "))
     message("Protected file: ", current_file)
@@ -264,6 +405,6 @@ delete_project_skeleton <- function(
     message("Nothing to delete.")
     message("Protected file: ", current_file)
   }
-  
+
   invisible(NULL)
 }

@@ -40,11 +40,19 @@
 #' @seealso [styler::style_file()], [styler::style_dir()], [usethis::use_tidy_style()]
 #' @export
 style_all_files <- function(
-    root = ".",
-    patterns = c("\\.R$", "\\.r$", "\\.Rmd$", "\\.rmd$", "\\.qmd$", "\\.Qmd$"),
-    exclude_dirs = c(".git", "renv", "_site", "_freeze", ".quarto", "_book", "tools"),
-    dry_run = FALSE,
-    ...
+  root = ".",
+  patterns = c("\\.R$", "\\.r$", "\\.Rmd$", "\\.rmd$", "\\.qmd$", "\\.Qmd$"),
+  exclude_dirs = c(
+    ".git",
+    "renv",
+    "_site",
+    "_freeze",
+    ".quarto",
+    "_book",
+    "tools"
+  ),
+  dry_run = FALSE,
+  ...
 ) {
   # Collect candidate files
   files <- list.files(
@@ -53,24 +61,30 @@ style_all_files <- function(
     recursive = TRUE,
     full.names = TRUE
   )
-  
+
   # Exclude files living under specified directories
   in_excluded_dir <- function(path, dirs) {
-    any(vapply(dirs, function(d) grepl(paste0("(^|/)", d, "(/|$)"), path), logical(1)))
+    any(vapply(
+      dirs,
+      function(d) grepl(paste0("(^|/)", d, "(/|$)"), path),
+      logical(1)
+    ))
   }
-  files <- files[!vapply(files, in_excluded_dir, logical(1), dirs = exclude_dirs)]
-  
+  files <- files[
+    !vapply(files, in_excluded_dir, logical(1), dirs = exclude_dirs)
+  ]
+
   if (dry_run) {
-    return(files)  # show what would be styled
+    return(files) # show what would be styled
   }
-  
+
   if (length(files) == 0) {
     message("No matching files found.")
     return(invisible(character()))
   }
-  
+
   # Style all files (styler handles .R, and code chunks in .Rmd/.qmd)
   styler::style_file(files, ...)
-  
+
   invisible(files)
 }

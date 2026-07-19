@@ -25,3 +25,5 @@ data/outputs/plots/
 # OS-specific files
 .DS_Store
 Thumbs.db
+/doc/
+/Meta/

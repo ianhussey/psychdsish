@@ -63,7 +63,7 @@ OS-specific clutter, and large output directories
 chunk, and \code{sessionInfo()} chunk
 \item \code{code/processing.qmd} - Quarto processing template (same structure)
 \item \code{tools/style_all_files.qmd} - reproducibility tool to apply
-{tidyverse} code style to all \code{.qmd}, \code{.Rmd}, and \code{.R} files
+tidyverse code style to all \code{.qmd}, \code{.Rmd}, and \code{.R} files
 }
 
 Quarto \code{.qmd} files are pre-filled with:

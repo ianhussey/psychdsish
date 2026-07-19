@@ -3,35 +3,42 @@
 #' Instruments the document by wrapping `library()` / `require()` and tracing
 #' exported functions. Always tries Quarto first, falling back to R Markdown
 #' only if Quarto render fails.
-#' 
-#' @import jsonlite
+#'
+#' @importFrom jsonlite read_json
 #' @import tibble
 #' @import dplyr
 #' @import stringr
 #' @import quarto
 #' @import rmarkdown
-#' 
+#'
 #' @examples
 #' \dontrun{
 #' res <- check_unused_dependencies_single("test.qmd")
 #' res
 #' }
-#' 
+#'
 #' @param path Path to the .qmd or .Rmd file.
 #' @return A tibble with one column: possibly_unused_packages
 #'   (packages attached but never called, excluding base defaults).
 #'
 .check_unused_dependencies_single_file <- function(path) {
-  if (!file.exists(path)) stop("File not found: ", path)
-  
+  if (!file.exists(path)) {
+    stop("File not found: ", path)
+  }
+
   # temp instrumented copy
-  ext <- tools::file_ext(path); if (!nzchar(ext)) ext <- "qmd"
-  tmp  <- tempfile(fileext = paste0(".", ext))
-  if (!file.copy(path, tmp, overwrite = TRUE)) stop("Failed to copy input to temp file.")
-  
+  ext <- tools::file_ext(path)
+  if (!nzchar(ext)) {
+    ext <- "qmd"
+  }
+  tmp <- tempfile(fileext = paste0(".", ext))
+  if (!file.copy(path, tmp, overwrite = TRUE)) {
+    stop("Failed to copy input to temp file.")
+  }
+
   out_json <- tempfile(fileext = ".json")
   out_json_esc <- gsub("\\\\", "/", out_json)
-  
+
   # ---- injected setup chunk (built as lines to avoid escaping hell) ----
   setup_lines <- c(
     "```{r}",
@@ -93,72 +100,113 @@
     ""
   )
   setup <- paste(setup_lines, collapse = "\n")
-  
+
   # ---- injected finale chunk ----
   finale_lines <- c(
     "```{r}",
     "attached <- sub('^package:', '', grep('^package:', search(), value = TRUE))",
     "loaded   <- loadedNamespaces()",
     "calls    <- as.list(if (length(ls(.sn_counts))) mget(ls(.sn_counts), envir = .sn_counts) else list())",
-    sprintf("jsonlite::write_json(list(attached = attached, loaded = loaded, calls = calls), '%s', auto_unbox = TRUE)", out_json_esc),
+    sprintf(
+      "jsonlite::write_json(list(attached = attached, loaded = loaded, calls = calls), '%s', auto_unbox = TRUE)",
+      out_json_esc
+    ),
     "```",
     ""
   )
   finale <- paste(finale_lines, collapse = "\n")
-  
+
   # write instrumented copy
   orig <- readLines(tmp, warn = FALSE)
   writeLines(c(setup, orig, finale), tmp)
-  
+
   # render (Quarto first; fallback to R Markdown)
   run_quarto <- function() {
-    if (!requireNamespace("quarto", quietly = TRUE)) stop("R package 'quarto' not installed.")
+    if (!requireNamespace("quarto", quietly = TRUE)) {
+      stop("R package 'quarto' not installed.")
+    }
     quarto::quarto_render(tmp, quiet = FALSE)
   }
   run_rmd <- function() {
-    if (!requireNamespace("rmarkdown", quietly = TRUE)) stop("R package 'rmarkdown' not installed.")
+    if (!requireNamespace("rmarkdown", quietly = TRUE)) {
+      stop("R package 'rmarkdown' not installed.")
+    }
     rmarkdown::render(tmp, quiet = FALSE, envir = new.env(parent = globalenv()))
   }
-  
-  rendered <- isTRUE(tryCatch({ run_quarto(); TRUE },
-                              error = function(e) { message("Quarto render failed, trying R Markdown. ", conditionMessage(e)); FALSE }))
+
+  rendered <- isTRUE(tryCatch(
+    {
+      run_quarto()
+      TRUE
+    },
+    error = function(e) {
+      message("Quarto render failed, trying R Markdown. ", conditionMessage(e))
+      FALSE
+    }
+  ))
   if (!rendered) {
-    rendered <- isTRUE(tryCatch({ run_rmd(); TRUE },
-                                error = function(e) { stop("Both Quarto and R Markdown renders failed: ", conditionMessage(e)) }))
+    rendered <- isTRUE(tryCatch(
+      {
+        run_rmd()
+        TRUE
+      },
+      error = function(e) {
+        stop("Both Quarto and R Markdown renders failed: ", conditionMessage(e))
+      }
+    ))
   }
-  
-  if (!file.exists(out_json)) stop("Instrumentation JSON not produced. Check console above.")
-  
+
+  if (!file.exists(out_json)) {
+    stop("Instrumentation JSON not produced. Check console above.")
+  }
+
   # read results
   res <- jsonlite::read_json(out_json, simplifyVector = TRUE)
-  
-  attached <- sort(unique(if (!is.null(res$attached)) res$attached else character()))
-  loaded   <- sort(unique(if (!is.null(res$loaded))   res$loaded   else character()))
-  calls    <- res$calls
-  call_pkgs   <- if (length(calls)) names(calls) else character()
-  call_counts <- if (length(calls)) as.integer(unlist(calls, use.names = FALSE)) else integer()
-  
+
+  attached <- sort(unique(
+    if (!is.null(res$attached)) res$attached else character()
+  ))
+  loaded <- sort(unique(if (!is.null(res$loaded)) res$loaded else character()))
+  calls <- res$calls
+  call_pkgs <- if (length(calls)) names(calls) else character()
+  call_counts <- if (length(calls)) {
+    as.integer(unlist(calls, use.names = FALSE))
+  } else {
+    integer()
+  }
+
   pkgs <- sort(unique(c(attached, loaded, call_pkgs)))
-  mm   <- match(pkgs, call_pkgs)
+  mm <- match(pkgs, call_pkgs)
   cnts <- ifelse(is.na(mm), 0L, call_counts[mm])
-  
+
   out <- tibble::tibble(
-    package  = pkgs,
+    package = pkgs,
     attached = package %in% attached,
-    loaded   = package %in% loaded,
-    calls    = cnts
+    loaded = package %in% loaded,
+    calls = cnts
   )
-  
+
   out$status <- dplyr::case_when(
-    out$attached & out$calls > 0L  ~ "used during render (calls > 0)",
+    out$attached & out$calls > 0L ~ "used during render (calls > 0)",
     out$attached & out$calls == 0L ~ "possibly unused (attached, 0 calls)",
-    !out$attached & out$loaded     ~ "loaded indirectly (dependency)",
-    TRUE                           ~ "unknown"
+    !out$attached & out$loaded ~ "loaded indirectly (dependency)",
+    TRUE ~ "unknown"
   )
-  
+
   out |>
     dplyr::filter(status != "loaded indirectly (dependency)") |>
-    dplyr::filter(!package %in% c("base","datasets","grDevices","graphics","methods","stats","utils")) |>
+    dplyr::filter(
+      !package %in%
+        c(
+          "base",
+          "datasets",
+          "grDevices",
+          "graphics",
+          "methods",
+          "stats",
+          "utils"
+        )
+    ) |>
     dplyr::filter(status == "possibly unused (attached, 0 calls)") |>
     dplyr::select(possibly_unused_packages = package)
 }

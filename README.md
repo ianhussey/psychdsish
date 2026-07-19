@@ -2,11 +2,28 @@
 
 # psych-DS-ish
 
+<!-- badges: start -->
+[![R-CMD-check](https://github.com/ianhussey/psychdsish/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/ianhussey/psychdsish/actions/workflows/R-CMD-check.yaml)
+
+[![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+<!-- badges: end -->
+
 Standardization of project structures is both very useful and, let's face it, not very exciting or at the top of anyone's To Do list. I wanted to make it easier, both in my own research and to teach students good practices. 
 
 {psychdsish} creates a standardized project skeleton that is compliant-ish with [psych-DS](https://psych-ds.github.io/) and also adds several features to improve reproducibility, such Quarto templates, a readme template, CC BY licence, and a .gitignore with reasonable defaults. 
 
 It also has a validator function that lets users check that their project is still compliant with the standard and, if not, tells them how to rectify it.
+
+## Installation
+
+You can install the development version of `psychdsish` from GitHub with:
+
+``` r
+# install.packages("remotes")
+remotes::install_github("ianhussey/psychdsish")
+```
 
 ## Data Standards
 
@@ -177,14 +194,13 @@ Results of `validator()` in a freshly generated project skeleton - note that som
 
 ## TODO
 
-- add argument to validator to toggle assesment of psych-DS vs psych-ds-ish? Or if psych-DS release their own R validator, adopt it here?
+- add argument to validator to toggle assessment of psych-DS vs psych-ds-ish? Or if psych-DS release their own R validator, adopt it here?
 - add checker for data files present but neither read nor written
 
 ## License
 
-© Ian Hussey (2025)
-
-MIT licence
+Code is MIT licenced © Ian Hussey (2025)
 
 ## Suggested citation
-Hussey, I. (2025) psych-DS-ish: Tools to Create and Validate psych-DS-Inspired Project Structures. https://github.com/ianhussey/psychdsish
+
+Hussey, I. (2025). psychdsish: Create and Validate psych-DS-Inspired Project Structures. [Computer software] [https://github.com/ianhussey/psychdsish](https://github.com/ianhussey/psychdsish).

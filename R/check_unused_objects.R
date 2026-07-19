@@ -30,13 +30,23 @@
 #' }
 #' @export
 check_unused_objects <- function(
-    root = ".",
-    patterns = c("\\.R$", "\\.r$", "\\.Rmd$", "\\.rmd$", "\\.qmd$", "\\.Qmd$"),
-    exclude_dirs = c(".git", "renv", "_site", "_freeze", ".quarto", "_book", "tools"),
-    verbose = FALSE
+  root = ".",
+  patterns = c("\\.R$", "\\.r$", "\\.Rmd$", "\\.rmd$", "\\.qmd$", "\\.Qmd$"),
+  exclude_dirs = c(
+    ".git",
+    "renv",
+    "_site",
+    "_freeze",
+    ".quarto",
+    "_book",
+    "tools"
+  ),
+  verbose = FALSE
 ) {
-  if (!dir.exists(root)) stop("Directory not found: ", root)
-  
+  if (!dir.exists(root)) {
+    stop("Directory not found: ", root)
+  }
+
   # Gather candidate files
   files <- list.files(
     path = root,
@@ -44,40 +54,78 @@ check_unused_objects <- function(
     recursive = TRUE,
     full.names = TRUE
   )
-  
+
   # Filter out excluded directories (match anywhere in path)
   in_excluded_dir <- function(path, dirs) {
-    any(vapply(dirs, function(d) grepl(paste0("(^|/)", d, "(/|$)"), path), logical(1)))
+    any(vapply(
+      dirs,
+      function(d) grepl(paste0("(^|/)", d, "(/|$)"), path),
+      logical(1)
+    ))
   }
-  files <- files[!vapply(files, in_excluded_dir, logical(1), dirs = exclude_dirs)]
-  
+  files <- files[
+    !vapply(files, in_excluded_dir, logical(1), dirs = exclude_dirs)
+  ]
+
   if (length(files) == 0L) {
-    if (verbose) message("No matching files found under: ", normalizePath(root, winslash = "/"))
-    return(data.frame(file = character(), unused_objects = character(), stringsAsFactors = FALSE))
+    if (verbose) {
+      message(
+        "No matching files found under: ",
+        normalizePath(root, winslash = "/")
+      )
+    }
+    return(data.frame(
+      file = character(),
+      unused_objects = character(),
+      stringsAsFactors = FALSE
+    ))
   }
-  
+
   # Apply the single-file checker safely
   results <- lapply(files, function(f) {
-    if (verbose) message("Checking: ", f)
+    if (verbose) {
+      message("Checking: ", f)
+    }
     out <- tryCatch(
-      check_unused_objects_single_file(f),  # must return data.frame(unused_objects = ...)
+      check_unused_objects_single_file(f), # must return data.frame(unused_objects = ...)
       error = function(e) {
-        if (verbose) message("  Skipping (parse/error): ", f, " — ", conditionMessage(e))
-        return(data.frame(unused_objects = character(), stringsAsFactors = FALSE))
+        if (verbose) {
+          message("  Skipping (parse/error): ", f, " - ", conditionMessage(e))
+        }
+        return(data.frame(
+          unused_objects = character(),
+          stringsAsFactors = FALSE
+        ))
       }
     )
     if (!is.data.frame(out) || !"unused_objects" %in% names(out)) {
       # Coerce to expected shape if the single-file function returns a character vector
-      if (is.character(out)) out <- data.frame(unused_objects = out, stringsAsFactors = FALSE)
-      else out <- data.frame(unused_objects = character(), stringsAsFactors = FALSE)
+      if (is.character(out)) {
+        out <- data.frame(unused_objects = out, stringsAsFactors = FALSE)
+      } else {
+        out <- data.frame(
+          unused_objects = character(),
+          stringsAsFactors = FALSE
+        )
+      }
     }
-    if (nrow(out) == 0L) return(NULL)
-    data.frame(file = rep(f, nrow(out)), unused_objects = out$unused_objects, stringsAsFactors = FALSE)
+    if (nrow(out) == 0L) {
+      return(NULL)
+    }
+    data.frame(
+      file = rep(f, nrow(out)),
+      unused_objects = out$unused_objects,
+      stringsAsFactors = FALSE
+    )
   })
-  
+
   results <- do.call(rbind, results)
   if (is.null(results)) {
-    data.frame(file = character(), unused_objects = character(), stringsAsFactors = FALSE)
+    data.frame(
+      file = character(),
+      unused_objects = character(),
+      stringsAsFactors = FALSE
+    )
   } else {
     # Optionally de-duplicate rows (in case the single-file function emits duplicates)
     unique(results[order(results$file, results$unused_objects), , drop = FALSE])

@@ -7,7 +7,7 @@
 #'
 #' @details
 #' The printed code:
-#' - Loads {dplyr}, {ggplot2}, and {stringr}.
+#' - Loads `dplyr`, `ggplot2`, and `stringr`.
 #' - Performs grouping, summarisation, filtering, joining, and plotting on
 #'   the built-in `mtcars` dataset.
 #' - Is deliberately badly formatted (inconsistent spacing, misaligned pipes,
@@ -34,7 +34,8 @@
 #' @seealso [styler::style_text()], [styler::style_file()]
 #' @export
 print_poorly_styled_code <- function() {
-  cat(r"(
+  cat(
+    r"(
 library(dplyr)
 library(ggplot2)
 library(stringr)
@@ -68,5 +69,6 @@ axis.text.x=element_text(angle=45,hjust=1)
 )+labs(
 x="Group",y="Average MPG",title="Badly Styled Tidyverse Example")+
 guides(fill=guide_legend(title="Transmission"))+coord_flip()
-)")
+)"
+  )
 }
