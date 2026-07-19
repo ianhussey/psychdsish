@@ -8,6 +8,8 @@
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21441984.svg)](https://doi.org/10.5281/zenodo.21441984)
 <!-- badges: end -->
 
 Standardization of project structures is both very useful and, let's face it, not very exciting or at the top of anyone's To Do list. I wanted to make it easier, both in my own research and to teach students good practices. 
@@ -203,4 +205,4 @@ Code is MIT licenced © Ian Hussey (2025)
 
 ## Suggested citation
 
-Hussey, I. (2025). psychdsish: Create and Validate psych-DS-Inspired Project Structures. [Computer software] [https://github.com/ianhussey/psychdsish](https://github.com/ianhussey/psychdsish).
+Hussey, I. (2025). psychdsish: Create and Validate psych-DS-Inspired Project Structures. [Computer software] [https://github.com/ianhussey/psychdsish](https://github.com/ianhussey/psychdsish) [doi:10.5281/zenodo.21441984](https://doi.org/10.5281/zenodo.21441984).
