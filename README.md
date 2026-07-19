@@ -1,4 +1,4 @@
-![](./man/figures/hex_small.png)
+<img src="man/figures/logo.png" width="30%" alt="psychdsish logo" />
 
 # psych-DS-ish
 
