@@ -1,6 +1,6 @@
 Package: psychdsish
 Title: Create and Validate 'psych-DS'-Inspired Project Structures
-Version: 0.1.2
+Version: 0.1.3
 Authors@R:
     person("Ian", "Hussey", email = "ian.hussey@unibe.ch",
            role = c("aut", "cre"),
@@ -14,7 +14,8 @@ Description: Creates a standardised R project skeleton that is loosely
     templates, a README, a licence, and a '.gitignore' with sensible
     defaults, and adds extra conventions for reproducibility and common
     'tidyverse' workflows. A validator function reports whether a project
-    follows the conventions and, where it does not, how to fix it.
+    follows the conventions and, where it does not, how to fix it. See Hussey
+    (2025) <doi:10.5281/zenodo.21441984> for the archived software record.
 URL: https://github.com/ianhussey/psychdsish
 BugReports: https://github.com/ianhussey/psychdsish/issues
 License: MIT + file LICENSE
