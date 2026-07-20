@@ -205,4 +205,4 @@ Code is MIT licenced © Ian Hussey (2025)
 
 ## Suggested citation
 
-Hussey, I. (2025). psychdsish: Create and Validate psych-DS-Inspired Project Structures. [Computer software] [https://github.com/ianhussey/psychdsish](https://github.com/ianhussey/psychdsish) [doi:10.5281/zenodo.21441984](https://doi.org/10.5281/zenodo.21441984).
+Hussey, I. (2025). psychdsish: Keep data, R code, and outputs organized and reproducible. [Computer software] [https://github.com/ianhussey/psychdsish](https://github.com/ianhussey/psychdsish) [doi:10.5281/zenodo.21441984](https://doi.org/10.5281/zenodo.21441984).
