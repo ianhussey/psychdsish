@@ -201,7 +201,7 @@ Results of `validator()` in a freshly generated project skeleton - note that som
 
 ## License
 
-Code is MIT licenced © Ian Hussey (2025)
+Code is MIT licenced © Ian Hussey (2025-2026)
 
 ## Suggested citation
 
