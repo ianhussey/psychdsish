@@ -1,5 +1,5 @@
 cff-version: 1.2.0
-title: "psychdsish: Create and Validate psych-DS-Inspired Project Structures"
+title: "psychdsish: Keep data, R code, and outputs organized and reproducible"
 message: >-
   If you use this software, please cite it as below.
 type: software
