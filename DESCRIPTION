@@ -1,5 +1,5 @@
 Package: psychdsish
-Title: Keep data, R code, and outputs organized and reproducible
+Title: Keep Data, R Code, and Outputs Organized and Reproducible
 Version: 0.1.3
 Authors@R:
     person("Ian", "Hussey", email = "ian.hussey@unibe.ch",
