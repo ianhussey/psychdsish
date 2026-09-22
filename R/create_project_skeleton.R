@@ -164,7 +164,9 @@ create_project_skeleton <- function(
 
   # record every directory/file handled, with paths relative to project_root
   log <- list()
-  root_prefix_n <- nchar(join(project_root, ""))
+  # length of "<project_root>/", measured from a child path because Windows
+  # drops the trailing separator from file.path(project_root, "")
+  root_prefix_n <- nchar(join(project_root, "x")) - 1
   record <- function(path, type, status) {
     log[[length(log) + 1]] <<- data.frame(
       path = substring(path, root_prefix_n + 1),

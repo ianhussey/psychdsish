@@ -134,6 +134,8 @@ test_that("create_project_skeleton reports created, skipped, and overwritten fil
   )
   expect_true(all(first$status == "created"))
   expect_true(all(c(".gitignore", ".gitattributes", "LICENSE") %in% first$path))
+  # paths are relative to the project root, on every platform
+  expect_false(any(startsWith(first$path, "/")))
   expect_true(file.exists(file.path(root, "data", "raw", ".gitkeep")))
 
   expect_message(
