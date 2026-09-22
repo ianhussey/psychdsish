@@ -77,8 +77,8 @@ test_that("a fresh skeleton fails only the README placeholder check", {
     failed_tests(res),
     "README has been customised (no template placeholders)"
   )
-  # not a git repository and nothing rendered yet
-  expect_equal(summary(res)$n_skip, 2L)
+  # not a git repository, nothing rendered, and no processed data yet
+  expect_equal(summary(res)$n_skip, 4L)
 
   customise_readme(root)
   expect_true(summary(validator(project_root = root))$passed)
@@ -317,4 +317,84 @@ test_that("validator addin prints results and builds the Viewer table", {
   expect_match(html, "<tr class=\"skip\">", fixed = TRUE)
   expect_match(html, "README has been customised", fixed = TRUE)
   expect_match(html, "&#39;|'# Project Title'")
+})
+
+test_that("validator checks processed data files have completed codebooks", {
+  root <- make_skeleton()
+  on.exit(unlink(root, recursive = TRUE, force = TRUE), add = TRUE)
+  customise_readme(root)
+  processed <- file.path(root, "data", "processed")
+
+  write.csv(data.frame(x = 1:3), file.path(processed, "study_1_data.csv"))
+  saveRDS(data.frame(x = 1:3), file.path(processed, "study_2.rds"))
+  res <- validator(project_root = root)
+  expect_equal(failed_tests(res), "Every processed data file has a codebook")
+  details <- res$`Details / Guidance`[res$Status == "FAIL"]
+  expect_match(details, "study_1_data.csv", fixed = TRUE)
+  expect_match(details, "study_2.rds", fixed = TRUE)
+
+  # codebooks matched by name, with any extension; placeholders flagged
+  write.csv(
+    data.frame(
+      variable = "x",
+      description = "TO BE COMPLETED MANUALLY",
+      units = "none",
+      coding = "TO BE COMPLETED MANUALLY"
+    ),
+    file.path(processed, "study_1_codebook.csv"),
+    row.names = FALSE
+  )
+  file.create(file.path(processed, "study_2_codebook.xlsx"))
+  res <- validator(project_root = root)
+  expect_equal(
+    failed_tests(res),
+    "Codebooks are completed (no 'TO BE COMPLETED MANUALLY')"
+  )
+  expect_match(
+    res$`Details / Guidance`[res$Status == "FAIL"],
+    "description: 1, coding: 1",
+    fixed = TRUE
+  )
+
+  write.csv(
+    data.frame(variable = "x", description = "Score", units = "none", coding = "none"),
+    file.path(processed, "study_1_codebook.csv"),
+    row.names = FALSE
+  )
+  expect_true(summary(validator(project_root = root))$passed)
+})
+
+test_that("processing.qmd codebook chunk creates and updates a codebook", {
+  root <- make_skeleton()
+  on.exit(unlink(root, recursive = TRUE, force = TRUE), add = TRUE)
+
+  # extract the codebook chunk from the template and run it in code/
+  lines <- readLines(file.path(root, "code", "processing.qmd"))
+  start <- grep("#| label: codebook", lines, fixed = TRUE)
+  end <- start + which(lines[(start + 1):length(lines)] == "```")[1]
+  chunk <- lines[(start + 1):(end - 1)]
+  old_wd <- setwd(file.path(root, "code"))
+  on.exit(setwd(old_wd), add = TRUE)
+  run_chunk <- function(data_processed) {
+    eval(parse(text = chunk), envir = environment())
+  }
+
+  run_chunk(data.frame(id = 1:3, age = c(20, NA, 30)))
+  path <- file.path(root, "data", "processed", "processed_codebook.csv")
+  cb <- read.csv(path, colClasses = "character")
+  expect_equal(cb$variable, c("id", "age"))
+  expect_equal(cb$values, c("1 to 3", "20 to 30"))
+  expect_true(all(cb$description == "TO BE COMPLETED MANUALLY"))
+
+  # manual entries are kept; new variables added; removed ones dropped
+  cb$description[cb$variable == "age"] <- "Age in years"
+  write.csv(cb, path, row.names = FALSE)
+  expect_message(
+    run_chunk(data.frame(age = c(20, NA, 30), group = c("a", "b", "a"))),
+    "id"
+  )
+  cb <- read.csv(path, colClasses = "character")
+  expect_equal(cb$variable, c("age", "group"))
+  expect_equal(cb$description, c("Age in years", "TO BE COMPLETED MANUALLY"))
+  expect_equal(cb$values[cb$variable == "group"], "a; b")
 })

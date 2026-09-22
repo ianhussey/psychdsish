@@ -62,6 +62,11 @@ the template placeholders written by \code{\link[=create_project_skeleton]{creat
 and R code in \code{.R} files and in \code{.qmd}/\code{.Rmd} code chunks contains
 no \code{setwd()} calls or absolute file paths (e.g., \code{"~/"},
 \code{"/Users/"}, \code{"C:/"}). Comment lines are ignored.
+\item \strong{Codebook checks} — Every data file in \verb{data/processed/} has a
+codebook named after it (e.g., \code{study_1_data.csv} ->
+\code{study_1_codebook.csv}, any data file extension), and \code{.csv}/\code{.tsv}
+codebooks no longer contain the "TO BE COMPLETED MANUALLY"
+placeholders written by the codebook chunk in \code{code/processing.qmd}.
 }
 
 Checks that cannot be run are reported as \code{"SKIP"} rather than \code{"PASS"},

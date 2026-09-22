@@ -302,6 +302,19 @@ create_project_skeleton <- function(
       "### Reproduce all results",
       readme_render,
       "",
+      "## Codebooks",
+      "Every data file in `data/processed/` should have a codebook (data dictionary) that describes each of its variables, named after the data file (e.g., `study_1_data.csv` -> `study_1_codebook.csv`).",
+      "",
+      "`code/processing.qmd` contains a chunk that creates the codebook from the processed data. It fills in each variable's type, number of missing values, and range or values, and marks the columns that only you can complete as \"TO BE COMPLETED MANUALLY\":",
+      "",
+      "- `description`: what the variable is, e.g., the item wording, or how a score was calculated.",
+      "- `units`: e.g., years or milliseconds. Write \"none\" if it does not apply.",
+      "- `coding`: what the values mean, e.g., \"1 = strongly disagree to 7 = strongly agree\", reverse-scored items, or missing-value codes such as -99.",
+      "",
+      "Open the .csv (e.g., in Excel), replace every placeholder, and save it as .csv. Re-rendering `code/processing.qmd` keeps your entries, adds new variables, and removes variables that are no longer in the data. `psychdsish::validator()` reports data files without a codebook, and codebooks that still contain placeholders.",
+      "",
+      "**Using AI assistants:** an AI assistant can help draft descriptions, but only from information it can actually see. For example, ask it to read `code/processing.qmd` and describe how each variable was created. It cannot know what your items said or what your codes mean, and will guess convincingly if asked. Check every entry against your study materials (e.g., in `methods/`), and do not keep any description you cannot verify.",
+      "",
       "## License",
       "CC BY 4.0 (see `LICENSE`).",
       "",
@@ -501,7 +514,76 @@ create_project_skeleton <- function(
     "code/analysis.qmd",
     "code/processing.qmd"
   )
-  qmd_header <- function(title) {
+  # codebook chunk, added to code/processing.qmd only
+  codebook_section <- paste(
+    c(
+      "# Codebook",
+      "",
+      "A codebook (data dictionary) describes every variable in the processed data. The chunk below creates `../data/processed/processed_codebook.csv` from `data_processed`, or updates it if it already exists. The automatic columns (`type`, `n_missing`, `values`) are refreshed on every render. The manual columns (`description`, `units`, `coding`) start as \"TO BE COMPLETED MANUALLY\": open the .csv (e.g., in Excel), replace them for every variable (write \"none\" where a column does not apply), and save it as .csv. Your entries are kept when the codebook is updated.",
+      "",
+      "```{r}",
+      "#| label: codebook",
+      "",
+      "# Rename `data_processed` and the file names to match your data. Save the data",
+      "# with a name ending in \"_data\" and the codebook with the same name ending in",
+      "# \"_codebook\", so that psychdsish::validator() can match them, e.g.:",
+      "# write.csv(data_processed, \"../data/processed/processed_data.csv\", row.names = FALSE)",
+      "",
+      "placeholder <- \"TO BE COMPLETED MANUALLY\"",
+      "codebook_path <- \"../data/processed/processed_codebook.csv\"",
+      "",
+      "# range for numeric and date variables, unique values otherwise",
+      "summarise_values <- function(x) {",
+      "  if (all(is.na(x))) {",
+      "    return(\"all missing\")",
+      "  }",
+      "  if (is.numeric(x) || inherits(x, c(\"Date\", \"POSIXt\"))) {",
+      "    return(paste(min(x, na.rm = TRUE), \"to\", max(x, na.rm = TRUE)))",
+      "  }",
+      "  values <- sort(unique(as.character(x[!is.na(x)])))",
+      "  if (length(values) > 10) {",
+      "    paste0(length(values), \" unique values, e.g., \", paste(head(values, 3), collapse = \"; \"))",
+      "  } else {",
+      "    paste(values, collapse = \"; \")",
+      "  }",
+      "}",
+      "",
+      "if (exists(\"data_processed\")) {",
+      "  codebook <- data.frame(",
+      "    variable = names(data_processed),",
+      "    type = vapply(data_processed, function(x) class(x)[1], character(1)),",
+      "    n_missing = vapply(data_processed, function(x) sum(is.na(x)), integer(1)),",
+      "    values = vapply(data_processed, summarise_values, character(1)),",
+      "    description = placeholder,",
+      "    units = placeholder,",
+      "    coding = placeholder",
+      "  )",
+      "",
+      "  # keep the manual entries from an existing codebook",
+      "  if (file.exists(codebook_path)) {",
+      "    existing <- read.csv(codebook_path, colClasses = \"character\")",
+      "    matched <- match(codebook$variable, existing$variable)",
+      "    for (col in intersect(c(\"description\", \"units\", \"coding\"), names(existing))) {",
+      "      codebook[[col]] <- ifelse(is.na(matched), placeholder, existing[[col]][matched])",
+      "    }",
+      "    dropped <- setdiff(existing$variable, codebook$variable)",
+      "    if (length(dropped) > 0) {",
+      "      message(\"Removed from the codebook (no longer in the data): \", paste(dropped, collapse = \", \"))",
+      "    }",
+      "  }",
+      "",
+      "  write.csv(codebook, codebook_path, row.names = FALSE)",
+      "  codebook",
+      "} else {",
+      "  message(\"Create `data_processed` above to generate its codebook.\")",
+      "}",
+      "```",
+      "",
+      ""
+    ),
+    collapse = "\n"
+  )
+  qmd_header <- function(title, codebook = FALSE) {
     project_root_norm <- normalizePath(
       project_root,
       winslash = "/",
@@ -532,6 +614,7 @@ create_project_skeleton <- function(
       "```{r}\n",
       "# packages and setup here\n",
       "```\n\n",
+      if (codebook) codebook_section else "",
       "# Session info\n",
       "```{r}\n",
       "sessionInfo()\n",
@@ -541,7 +624,10 @@ create_project_skeleton <- function(
   invisible(lapply(qmd_files, function(rel) {
     write_if_absent(
       join(project_root, rel),
-      qmd_header(gsub("^code/|\\.qmd$", "", rel))
+      qmd_header(
+        gsub("^code/|\\.qmd$", "", rel),
+        codebook = rel == "code/processing.qmd"
+      )
     )
   }))
 

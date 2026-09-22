@@ -85,8 +85,9 @@ my_project/
 a table of tests, each marked `PASS`, `FAIL`, or `SKIP` (the check could not be
 run), with guidance on how to fix any failures. A freshly created skeleton fails
 only one test, as a reminder to replace the template text in its `README.md`.
-Two tests are skipped: the raw data check, because the project is not yet a git
-repository, and the rendered `.html` check, because nothing has been rendered:
+Four tests are skipped: the raw data check, because the project is not yet a git
+repository; the rendered `.html` check, because nothing has been rendered; and
+the two codebook checks, because there is no processed data yet:
 
 ```{r}
 res <- validator(project_root = project)
@@ -97,7 +98,8 @@ The rules cover, among other things, which directories must exist, where each
 file type is allowed to live (for example, data files under `data/`, scripts
 under `code/` or `tools/`), that filenames contain no spaces, that raw data have
 not changed since they were first committed to git, that rendered `.html` files
-are up to date, and that code contains no `setwd()` calls or absolute paths. See
+are up to date, that code contains no `setwd()` calls or absolute paths, and
+that every processed data file has a completed codebook. See
 `?validator` for the full set of rules.
 
 To fail a continuous integration job (e.g., GitHub Actions) when any check

@@ -200,6 +200,7 @@ A project is **psych-DS(ish)-compliant** if it follows all of the following rule
 | **Rendered .html**        | Newer than its `.qmd` | A `.qmd` changed since its `.html` was last rendered |
 | **README.md**             | Customised | Still contains the template placeholders from `create_project_skeleton()` |
 | **R code** (`.R` files and `.qmd`/`.Rmd` code chunks) | Relative paths, e.g., `../data/raw/` | `setwd()` calls; absolute paths, e.g., `"~/"`, `"/Users/"`, `"C:/"` |
+| **Codebooks**            | Every data file in `data/processed/` has a codebook named after it (e.g., `study_1_data.csv` -> `study_1_codebook.csv`), with no "TO BE COMPLETED MANUALLY" placeholders left (`.csv`/`.tsv` codebooks) | Data files without a codebook; placeholders left in a codebook |
 
 Checks that cannot be run (e.g., the raw data check in a project that is not a git repository) are reported as `SKIP`. Use `validator(strict = TRUE)` to throw an error if any check fails, e.g., to fail a GitHub Actions job.
 

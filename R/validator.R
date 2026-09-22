@@ -38,6 +38,11 @@
 #'         and R code in `.R` files and in `.qmd`/`.Rmd` code chunks contains
 #'         no `setwd()` calls or absolute file paths (e.g., `"~/"`,
 #'         `"/Users/"`, `"C:/"`). Comment lines are ignored.
+#'   \item **Codebook checks** — Every data file in `data/processed/` has a
+#'         codebook named after it (e.g., `study_1_data.csv` ->
+#'         `study_1_codebook.csv`, any data file extension), and `.csv`/`.tsv`
+#'         codebooks no longer contain the "TO BE COMPLETED MANUALLY"
+#'         placeholders written by the codebook chunk in `code/processing.qmd`.
 #' }
 #'
 #' Checks that cannot be run are reported as `"SKIP"` rather than `"PASS"`,
@@ -718,6 +723,128 @@ validator <- function(project_root = "../", strict = FALSE) {
       }
     )
   )
+
+  # Codebooks for processed data
+  codebook_test <- "Every processed data file has a codebook"
+  codebook_done_test <- "Codebooks are completed (no 'TO BE COMPLETED MANUALLY')"
+  data_exts_processed <- c(
+    "csv",
+    "tsv",
+    "xlsx",
+    "sav",
+    "dta",
+    "parquet",
+    "feather",
+    "rds"
+  )
+  processed_dir <- fs::path(project_root, "data", "processed")
+  processed_files <- if (fs::dir_exists(processed_dir)) {
+    fs::dir_ls(processed_dir, type = "file", recurse = TRUE)
+  } else {
+    character(0)
+  }
+  processed_files <- processed_files[
+    tolower(fs::path_ext(processed_files)) %in% data_exts_processed
+  ]
+  is_codebook <- grepl("codebook", tolower(fs::path_file(processed_files)))
+  codebook_files <- processed_files[is_codebook]
+  data_files <- processed_files[!is_codebook]
+
+  if (length(data_files) == 0) {
+    results <- dplyr::bind_rows(
+      results,
+      mk_skip(codebook_test, "No data files in data/processed/."),
+      mk_skip(codebook_done_test, "No data files in data/processed/.")
+    )
+  } else {
+    # "x_data.csv" is documented by "x_codebook.<any extension>" in the same
+    # folder; files not ending in "_data" by "<name>_codebook.<ext>"
+    codebook_keys <- tolower(fs::path(
+      fs::path_dir(codebook_files),
+      fs::path_ext_remove(fs::path_file(codebook_files))
+    ))
+    expected_keys <- tolower(fs::path(
+      fs::path_dir(data_files),
+      paste0(
+        sub("_data$", "", fs::path_ext_remove(fs::path_file(data_files))),
+        "_codebook"
+      )
+    ))
+    undocumented <- data_files[!expected_keys %in% codebook_keys]
+    results <- dplyr::bind_rows(
+      results,
+      mk_test(
+        codebook_test,
+        length(undocumented) == 0,
+        if (length(undocumented)) {
+          paste0(
+            "Add a codebook for: ",
+            paste(rel(undocumented), collapse = "; "),
+            ". Name it after the data file, ending in '_codebook' (e.g., study_1_data.csv -> study_1_codebook.csv). ",
+            "code/processing.qmd contains a chunk that creates one."
+          )
+        } else {
+          ""
+        }
+      )
+    )
+
+    # manual columns still containing the template placeholder (.csv/.tsv only)
+    text_codebooks <- codebook_files[
+      tolower(fs::path_ext(codebook_files)) %in% c("csv", "tsv")
+    ]
+    if (length(text_codebooks) == 0) {
+      results <- dplyr::bind_rows(
+        results,
+        mk_skip(
+          codebook_done_test,
+          "No .csv or .tsv codebooks to check (other formats are not read)."
+        )
+      )
+    } else {
+      incomplete <- purrr::map_chr(text_codebooks, function(f) {
+        sep <- if (tolower(fs::path_ext(f)) == "tsv") "\t" else ","
+        cb <- tryCatch(
+          utils::read.csv(f, sep = sep, colClasses = "character"),
+          error = function(e) NULL
+        )
+        if (is.null(cb)) {
+          return(paste0(rel(f), " (could not be read)"))
+        }
+        todo <- vapply(
+          cb,
+          function(col) sum(trimws(col) == "TO BE COMPLETED MANUALLY", na.rm = TRUE),
+          integer(1)
+        )
+        todo <- todo[todo > 0]
+        if (length(todo) == 0) {
+          return(NA_character_)
+        }
+        paste0(
+          rel(f),
+          " (",
+          paste(paste0(names(todo), ": ", todo), collapse = ", "),
+          ")"
+        )
+      })
+      incomplete <- incomplete[!is.na(incomplete)]
+      results <- dplyr::bind_rows(
+        results,
+        mk_test(
+          codebook_done_test,
+          length(incomplete) == 0,
+          if (length(incomplete)) {
+            paste0(
+              "Replace 'TO BE COMPLETED MANUALLY' (write 'none' where a column does not apply) in: ",
+              paste(incomplete, collapse = "; ")
+            )
+          } else {
+            ""
+          }
+        )
+      )
+    }
+  }
 
   # --- 6) Present results ---
   results <- results |>
