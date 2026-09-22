@@ -1,0 +1,4 @@
+Name: Validate psych-DS-ish project
+Description: Check the current project against the psych-DS-ish standard, printing the results to the console and showing them as a table in the Viewer pane.
+Binding: validator_addin
+Interactive: false

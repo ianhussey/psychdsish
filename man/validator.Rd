@@ -17,16 +17,17 @@ Defaults to \code{FALSE}.}
 }
 \value{
 A tibble of class \code{psychdsish_validation} with one row per check
-(failures first), containing:
+(failures first, then skipped checks), containing:
 \describe{
 \item{Test}{Description of the check performed.}
-\item{Status}{Either \code{"PASS"} or \code{"FAIL"}.}
+\item{Status}{\code{"PASS"}, \code{"FAIL"}, or \code{"SKIP"} (the check could not be
+run).}
 \item{Details / Guidance}{Additional information, such as instructions
 for fixing failures or offending file paths.}
 }
 Printing it shows coloured PASS/FAIL results with guidance for failures.
-\code{summary()} returns a list with \code{project_root}, \code{n_pass}, \code{n_fail}, and
-\code{passed} (\code{TRUE} if no check failed). If \code{strict = TRUE} and any check
+\code{summary()} returns a list with \code{project_root}, \code{n_pass}, \code{n_fail},
+\code{n_skip}, and \code{passed} (\code{TRUE} if no check failed). If \code{strict = TRUE} and any check
 fails, an error is thrown instead.
 }
 \description{
@@ -52,7 +53,21 @@ or \verb{methods/}.
 \item \strong{Hygiene checks} — Optional rules that discourage spaces in
 filenames, check for \code{.gitignore} presence, and prevent data
 files being stored under \verb{code/}.
+\item \strong{Reproducibility checks} — Raw data files have not been modified
+or deleted since they were first committed to git (including
+uncommitted changes); rendered \code{.html} files are newer than their
+\code{.qmd} (using git commit times for committed, unmodified files, and
+file modification times otherwise); \code{README.md} no longer contains
+the template placeholders written by \code{\link[=create_project_skeleton]{create_project_skeleton()}};
+and R code in \code{.R} files and in \code{.qmd}/\code{.Rmd} code chunks contains
+no \code{setwd()} calls or absolute file paths (e.g., \code{"~/"},
+\code{"/Users/"}, \code{"C:/"}). Comment lines are ignored.
 }
+
+Checks that cannot be run are reported as \code{"SKIP"} rather than \code{"PASS"},
+e.g., the raw data check when the project is not a git repository, or the
+\code{.html} check when nothing has been rendered yet. Skipped checks do not
+cause \code{strict = TRUE} to fail.
 }
 \examples{
 \dontrun{

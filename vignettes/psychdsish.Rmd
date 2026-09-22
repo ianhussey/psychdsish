@@ -82,8 +82,11 @@ my_project/
 ## Validating a project
 
 `validator()` checks a project against the psych-DS-ish conventions and returns
-a table of tests, each marked `PASS` or `FAIL`, with guidance on how to fix any
-failures. A freshly created skeleton passes every test:
+a table of tests, each marked `PASS`, `FAIL`, or `SKIP` (the check could not be
+run), with guidance on how to fix any failures. A freshly created skeleton fails
+only one test, as a reminder to replace the template text in its `README.md`.
+Two tests are skipped: the raw data check, because the project is not yet a git
+repository, and the rendered `.html` check, because nothing has been rendered:
 
 ```{r}
 res <- validator(project_root = project)
@@ -92,8 +95,13 @@ res
 
 The rules cover, among other things, which directories must exist, where each
 file type is allowed to live (for example, data files under `data/`, scripts
-under `code/` or `tools/`), and that filenames contain no spaces. See
+under `code/` or `tools/`), that filenames contain no spaces, that raw data have
+not changed since they were first committed to git, that rendered `.html` files
+are up to date, and that code contains no `setwd()` calls or absolute paths. See
 `?validator` for the full set of rules.
+
+To fail a continuous integration job (e.g., GitHub Actions) when any check
+fails, use `validator(strict = TRUE)`.
 
 ## Deleting a skeleton
 

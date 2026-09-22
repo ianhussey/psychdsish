@@ -29,20 +29,35 @@
 #'   \item **Hygiene checks** — Optional rules that discourage spaces in
 #'         filenames, check for `.gitignore` presence, and prevent data
 #'         files being stored under `code/`.
+#'   \item **Reproducibility checks** — Raw data files have not been modified
+#'         or deleted since they were first committed to git (including
+#'         uncommitted changes); rendered `.html` files are newer than their
+#'         `.qmd` (using git commit times for committed, unmodified files, and
+#'         file modification times otherwise); `README.md` no longer contains
+#'         the template placeholders written by [create_project_skeleton()];
+#'         and R code in `.R` files and in `.qmd`/`.Rmd` code chunks contains
+#'         no `setwd()` calls or absolute file paths (e.g., `"~/"`,
+#'         `"/Users/"`, `"C:/"`). Comment lines are ignored.
 #' }
+#'
+#' Checks that cannot be run are reported as `"SKIP"` rather than `"PASS"`,
+#' e.g., the raw data check when the project is not a git repository, or the
+#' `.html` check when nothing has been rendered yet. Skipped checks do not
+#' cause `strict = TRUE` to fail.
 #'
 #' @return
 #' A tibble of class `psychdsish_validation` with one row per check
-#' (failures first), containing:
+#' (failures first, then skipped checks), containing:
 #' \describe{
 #'   \item{Test}{Description of the check performed.}
-#'   \item{Status}{Either `"PASS"` or `"FAIL"`.}
+#'   \item{Status}{`"PASS"`, `"FAIL"`, or `"SKIP"` (the check could not be
+#'         run).}
 #'   \item{Details / Guidance}{Additional information, such as instructions
 #'         for fixing failures or offending file paths.}
 #' }
 #' Printing it shows coloured PASS/FAIL results with guidance for failures.
-#' `summary()` returns a list with `project_root`, `n_pass`, `n_fail`, and
-#' `passed` (`TRUE` if no check failed). If `strict = TRUE` and any check
+#' `summary()` returns a list with `project_root`, `n_pass`, `n_fail`,
+#' `n_skip`, and `passed` (`TRUE` if no check failed). If `strict = TRUE` and any check
 #' fails, an error is thrown instead.
 #'
 #' @examples
@@ -86,6 +101,10 @@ validator <- function(project_root = "../", strict = FALSE) {
       status = ifelse(passed, "PASS", "FAIL"),
       details = details
     )
+  }
+
+  mk_skip <- function(test, details) {
+    tibble::tibble(test = test, status = "SKIP", details = details)
   }
 
   exists_ci <- function(relpath) {
@@ -463,10 +482,249 @@ validator <- function(project_root = "../", strict = FALSE) {
     )
   }
 
-  # --- 5) Present results ---
+  # --- 5) Reproducibility checks ---
+  rel <- function(p) as.character(fs::path_rel(p, start = project_root))
+
+  # git helpers: all commands run from project_root and fail quietly
+  git <- function(...) {
+    out <- tryCatch(
+      suppressWarnings(system2(
+        "git",
+        c("-C", shQuote(project_root), ...),
+        stdout = TRUE,
+        stderr = FALSE
+      )),
+      error = function(e) character(0)
+    )
+    if (!is.null(attr(out, "status"))) character(0) else out
+  }
+  in_git <- nzchar(Sys.which("git")) &&
+    identical(git("rev-parse", "--is-inside-work-tree"), "true")
+  git_prefix <- if (in_git) git("rev-parse", "--show-prefix") else character(0)
+  git_prefix <- if (length(git_prefix)) git_prefix else ""
+  # `git status --porcelain` paths are relative to the repository root
+  strip_prefix <- function(paths) {
+    ifelse(
+      startsWith(paths, git_prefix),
+      substring(paths, nchar(git_prefix) + 1),
+      paths
+    )
+  }
+
+  # Raw data unchanged since first committed
+  raw_test <- "Raw data unchanged since first committed (git)"
+  if (!exists_ci("data/raw")) {
+    results <- dplyr::bind_rows(
+      results,
+      mk_skip(raw_test, "No data/raw/ directory.")
+    )
+  } else if (!in_git) {
+    results <- dplyr::bind_rows(
+      results,
+      mk_skip(
+        raw_test,
+        "Not a git repository (or git is not installed), so the history of data/raw/ cannot be checked."
+      )
+    )
+  } else {
+    # files modified (M) or deleted (D) in any commit after they were added
+    changed_committed <- git(
+      "log",
+      "--diff-filter=MD",
+      "--name-only",
+      "--format=",
+      "--relative",
+      "--",
+      "data/raw"
+    )
+    # uncommitted modifications or deletions of tracked files
+    porcelain <- git("status", "--porcelain", "--", "data/raw")
+    xy <- substr(porcelain, 1, 2)
+    changed_uncommitted <- strip_prefix(
+      substring(porcelain[grepl("[MD]", xy)], 4)
+    )
+    changed <- unique(c(changed_committed, changed_uncommitted))
+    changed <- sort(changed[nzchar(changed) & basename(changed) != ".gitkeep"])
+    results <- dplyr::bind_rows(
+      results,
+      mk_test(
+        raw_test,
+        length(changed) == 0,
+        if (length(changed)) {
+          paste0(
+            "Modified or deleted since first committed: ",
+            paste(changed, collapse = "; "),
+            ". Raw data should be read-only: make changes in code instead, and restore the originals from git. ",
+            "If the change was to remove private data, this is expected, but the private data are still in the git history ",
+            "(and on GitHub, if pushed) and must be purged separately, e.g., with git filter-repo or BFG Repo-Cleaner."
+          )
+        } else {
+          ""
+        }
+      )
+    )
+  }
+
+  # Rendered .html files are newer than their .qmd
+  html_test <- "Rendered .html files are up to date with their .qmd"
+  qmds <- list_ext("qmd")
+  htmls <- fs::path_ext_set(qmds, "html")
+  has_html <- fs::file_exists(htmls)
+  qmds <- qmds[has_html]
+  htmls <- htmls[has_html]
+  if (length(qmds) == 0) {
+    results <- dplyr::bind_rows(
+      results,
+      mk_skip(html_test, "No rendered .html files found next to .qmd files.")
+    )
+  } else {
+    # last commit time for committed, unmodified files; otherwise modification
+    # time (which, after a fresh clone, only reflects the checkout)
+    file_time <- function(f) {
+      if (in_git && length(git("status", "--porcelain", "--", shQuote(f))) == 0) {
+        ct <- git("log", "-1", "--format=%ct", "--", shQuote(f))
+        if (length(ct) == 1 && nzchar(ct)) {
+          return(as.numeric(ct))
+        }
+      }
+      as.numeric(fs::file_info(f)$modification_time)
+    }
+    stale <- qmds[purrr::map2_lgl(qmds, htmls, function(q, h) {
+      file_time(q) > file_time(h) + 1
+    })]
+    results <- dplyr::bind_rows(
+      results,
+      mk_test(
+        html_test,
+        length(stale) == 0,
+        if (length(stale)) {
+          paste0(
+            "Changed since last rendered: ",
+            paste(rel(stale), collapse = "; "),
+            ". Re-render them (see the README's Reproducibility section)."
+          )
+        } else {
+          ""
+        }
+      )
+    )
+  }
+
+  # README customised
+  readme_test <- "README has been customised (no template placeholders)"
+  readme_file <- all_paths[
+    fs::path_dir(all_paths) == project_root &
+      tolower(fs::path_file(all_paths)) == "readme.md"
+  ]
+  if (length(readme_file) == 0) {
+    results <- dplyr::bind_rows(
+      results,
+      mk_skip(readme_test, "No README.md found.")
+    )
+  } else {
+    readme_lines <- readLines(readme_file[1], warn = FALSE)
+    placeholders <- c(
+      "# Project Title",
+      "Add aims, data sources, and reproduction steps.",
+      "Authors (Year). Title. URL."
+    )
+    found <- placeholders[purrr::map_lgl(placeholders, function(ph) {
+      any(trimws(readme_lines) == ph)
+    })]
+    results <- dplyr::bind_rows(
+      results,
+      mk_test(
+        readme_test,
+        length(found) == 0,
+        if (length(found)) {
+          paste0(
+            "Replace the template text in README.md: ",
+            paste(paste0("'", found, "'"), collapse = "; ")
+          )
+        } else {
+          ""
+        }
+      )
+    )
+  }
+
+  # No setwd() or absolute paths in code
+  code_files <- c(list_ext("R"), list_ext("qmd"), list_ext("Rmd"))
+  code_files <- code_files[
+    !grepl("(^|/)(\\.[^/]+|renv)/", rel(code_files))
+  ]
+  code_lines <- purrr::map_dfr(code_files, function(f) {
+    lines <- readLines(f, warn = FALSE)
+    keep <- rep(TRUE, length(lines))
+    if (tolower(fs::path_ext(f)) %in% c("qmd", "rmd")) {
+      # only lines inside R code chunks
+      in_chunk <- FALSE
+      for (i in seq_along(lines)) {
+        if (!in_chunk && grepl("^\\s*```+\\s*\\{r", lines[i])) {
+          in_chunk <- TRUE
+          keep[i] <- FALSE
+        } else if (in_chunk && grepl("^\\s*```+\\s*$", lines[i])) {
+          in_chunk <- FALSE
+          keep[i] <- FALSE
+        } else {
+          keep[i] <- in_chunk
+        }
+      }
+    }
+    # ignore comment lines (including #| chunk options)
+    keep <- keep & !grepl("^\\s*#", lines)
+    tibble::tibble(
+      where = paste0(rel(f), ":", seq_along(lines))[keep],
+      code = lines[keep]
+    )
+  })
+  if (nrow(code_lines) == 0) {
+    code_lines <- tibble::tibble(where = character(), code = character())
+  }
+  setwd_hits <- code_lines$where[grepl("\\bsetwd\\s*\\(", code_lines$code)]
+  abs_pattern <- paste0(
+    "[\"'](",
+    "~[/\\\\]", # home directory
+    "|/(Users|home|Volumes|mnt|media|opt|srv|tmp|var|private)/", # Unix
+    "|[A-Za-z]:[/\\\\]", # Windows drive
+    ")"
+  )
+  abs_hits <- code_lines$where[grepl(abs_pattern, code_lines$code)]
+  results <- dplyr::bind_rows(
+    results,
+    mk_test(
+      "No setwd() calls in code",
+      length(setwd_hits) == 0,
+      if (length(setwd_hits)) {
+        paste0(
+          "Remove setwd() from: ",
+          paste(setwd_hits, collapse = "; "),
+          ". Each .qmd runs from its own folder, so use relative paths (e.g., ../data/raw/)."
+        )
+      } else {
+        ""
+      }
+    ),
+    mk_test(
+      "No absolute file paths in code",
+      length(abs_hits) == 0,
+      if (length(abs_hits)) {
+        paste0(
+          "Replace absolute paths with relative ones (e.g., ../data/raw/) in: ",
+          paste(abs_hits, collapse = "; ")
+        )
+      } else {
+        ""
+      }
+    )
+  )
+
+  # --- 6) Present results ---
   results <- results |>
-    dplyr::mutate(status = factor(status, levels = c("PASS", "FAIL"))) |>
-    dplyr::arrange(dplyr::desc(status), test)
+    dplyr::mutate(
+      status = factor(status, levels = c("FAIL", "SKIP", "PASS"))
+    ) |>
+    dplyr::arrange(status, test)
 
   n_fail <- sum(results$status == "FAIL")
   n_pass <- sum(results$status == "PASS")
@@ -517,19 +775,26 @@ print.psychdsish_validation <- function(x, ...) {
       if (!is.na(details) && details != "-") {
         line("       ", cli::col_grey(details))
       }
+    } else if (x$Status[i] == "SKIP") {
+      line(cli::col_yellow(paste(cli::symbol$circle, "SKIP")), " ", x$Test[i])
+      line("       ", cli::col_grey(x$`Details / Guidance`[i]))
     } else {
       line(cli::col_green(paste(cli::symbol$tick, "PASS")), " ", x$Test[i])
     }
   }
   line(cli::rule())
+  skipped <- if (smry$n_skip > 0) sprintf(" (%d skipped)", smry$n_skip) else ""
   if (smry$passed) {
-    line(cli::col_green(sprintf("All %d checks passed.", smry$n_pass)))
+    line(cli::col_green(sprintf("All %d checks passed.", smry$n_pass)), skipped)
   } else {
-    line(cli::col_red(sprintf(
-      "%d of %d checks failed.",
-      smry$n_fail,
-      smry$n_pass + smry$n_fail
-    )))
+    line(
+      cli::col_red(sprintf(
+        "%d of %d checks failed.",
+        smry$n_fail,
+        smry$n_pass + smry$n_fail
+      )),
+      skipped
+    )
   }
   invisible(x)
 }
@@ -541,6 +806,7 @@ summary.psychdsish_validation <- function(object, ...) {
     project_root = attr(object, "project_root"),
     n_pass = sum(object$Status == "PASS"),
     n_fail = n_fail,
+    n_skip = sum(object$Status == "SKIP"),
     passed = n_fail == 0
   )
 }

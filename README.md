@@ -133,6 +133,18 @@ github_repository_name/
 psychdsish::create_project_skeleton(project_root = "~/git/my_project")
 ```
 
+## Validating a project
+
+**RStudio:** with the project open, click *Addins > Validate psych-DS-ish project* in the toolbar. The results are printed in the console and shown as a colour-coded table in the Viewer pane. To run it with a keyboard shortcut, go to *Tools > Modify Keyboard Shortcuts* and search for "psych-DS-ish".
+
+**Positron, or any other editor:** Positron does not support RStudio addins, so run this from the R console in the project root instead:
+
+``` r
+psychdsish::validator(".")
+```
+
+Alternatively, render `tools/project_validator.qmd` for an HTML report, or use `validator(".", strict = TRUE)` to throw an error on any failure, e.g., in a GitHub Actions workflow.
+
 ## Skeleton project structure created by `create_project_skeleton()`
 
 This is the skeleton that  `create_project_skeleton()` creates:
@@ -184,6 +196,12 @@ A project is **psych-DS(ish)-compliant** if it follows all of the following rule
 | **Data-like files under `code/`** | None | Any `.csv`, `.xlsx`, `.tsv`, `.sav`, `.dta`, `.feather`, `.rds` |
 | **.gitignore**            | Present and configured to ignore R session files, caches, large binaries | Absent |
 | **Filenames**             | No spaces | Any filename containing spaces |
+| **Raw data** (requires git) | Unchanged since first committed; adding new raw files is fine | Modifying or deleting committed files in `data/raw/`, including uncommitted changes |
+| **Rendered .html**        | Newer than its `.qmd` | A `.qmd` changed since its `.html` was last rendered |
+| **README.md**             | Customised | Still contains the template placeholders from `create_project_skeleton()` |
+| **R code** (`.R` files and `.qmd`/`.Rmd` code chunks) | Relative paths, e.g., `../data/raw/` | `setwd()` calls; absolute paths, e.g., `"~/"`, `"/Users/"`, `"C:/"` |
+
+Checks that cannot be run (e.g., the raw data check in a project that is not a git repository) are reported as `SKIP`. Use `validator(strict = TRUE)` to throw an error if any check fails, e.g., to fail a GitHub Actions job.
 
 
 
@@ -203,7 +221,7 @@ You can also use the function directly from the console without needing the .qmd
 
 <br>
 
-Results of `validator()` in a freshly generated project skeleton - note that some tests are not printed unless failed:
+Results of `validator()` in a freshly generated project skeleton - note that some tests are not printed unless failed. (Screenshot from an earlier version: a fresh skeleton now fails one check, as a reminder to replace the template text in its README.)
 
 ![](./man/figures/validator.png)
 
