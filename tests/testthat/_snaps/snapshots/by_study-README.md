@@ -68,7 +68,7 @@ Clicking *Render* in an individual `.qmd` file renders only that file. Use it wh
 If you add another processing or analysis file (e.g., `study_1/code/processing_part_2.qmd`), add it to the `render:` list in `_quarto.yml` in the position it should run, otherwise it will not be rendered with the rest of the project.
 
 ## Codebooks
-Every data file in `study_*/data/processed/` should have a codebook (data dictionary) that describes each of its variables, named after the data file (e.g., `study_1_data.csv` -> `study_1_codebook.csv`).
+Every data file in `study_*/data/processed/` should have a codebook (data dictionary) that describes each of its variables, named after the data file (e.g., `study-1_stage-processed_data.csv` -> `study-1_stage-processed_codebook.csv`). Data file names follow the [psych-DS](https://psych-ds.github.io/) convention: pairs of `key-value` separated by underscores, ending in `_data`.
 
 `study_1/code/processing.qmd` contains a chunk that creates the codebook from the processed data. It fills in each variable's type, number of missing values, and range or values, and marks the columns that only you can complete as "TO BE COMPLETED MANUALLY":
 
@@ -77,6 +77,13 @@ Every data file in `study_*/data/processed/` should have a codebook (data dictio
 - `coding`: what the values mean, e.g., "1 = strongly disagree to 7 = strongly agree", reverse-scored items, or missing-value codes such as -99.
 
 Open the .csv (e.g., in Excel), replace every placeholder, and save it as .csv. Re-rendering `study_1/code/processing.qmd` keeps your entries, adds new variables, and removes variables that are no longer in the data. `psychdsish::validator()` reports data files without a codebook, and codebooks that still contain placeholders.
+
+
+### Codebook .csv or dataset_description.json?
+There are two ways to document the variables, and you do not need both:
+
+- **The codebook .csv (simpler).** Quick to fill in, readable in Excel, and all that `psychdsish::validator()` asks for.
+- **`dataset_description.json` (more psych-DS compliant).** Machine-readable metadata in the project root, required by the [psych-DS](https://psych-ds.github.io/) standard. `study_1/code/processing.qmd` contains a chunk (not run by default) that writes it from the codebooks with `psychdsish::write_dataset_description()`, so each variable is still described only once. Data file names in this project already follow the psych-DS convention of `key-value` pairs ending in `_data`. To check the project against the standard itself, use the psych-DS validator at <https://psych-ds.github.io/validator/>.
 
 **Using AI assistants:** an AI assistant can help draft descriptions, but only from information it can actually see. For example, ask it to read `study_1/code/processing.qmd` and describe how each variable was created. It cannot know what your items said or what your codes mean, and will guess convincingly if asked. Check every entry against your study materials (e.g., in `study_1/methods/`), and do not keep any description you cannot verify.
 

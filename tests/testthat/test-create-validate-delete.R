@@ -382,7 +382,7 @@ test_that("processing.qmd codebook chunk creates and updates a codebook", {
   }
 
   run_chunk(data.frame(id = 1:3, age = c(20, NA, 30)))
-  path <- file.path(root, "data", "processed", "processed_codebook.csv")
+  path <- file.path(root, "data", "processed", "stage-processed_codebook.csv")
   cb <- read.csv(path, colClasses = "character")
   expect_equal(cb$variable, c("id", "age"))
   expect_equal(cb$values, c("1 to 3", "20 to 30"))
@@ -459,7 +459,11 @@ test_that("multi-study by_study skeleton is created and validated", {
   creator <- readLines(file.path(root, "tools", "project_creator.qmd"))
   expect_true(any(grepl('studies = 2, layout = "by_study"', creator, fixed = TRUE)))
   processing <- readLines(file.path(root, "study_1", "code", "processing.qmd"))
-  expect_true(any(grepl('"../data/processed/processed_codebook.csv"', processing, fixed = TRUE)))
+  expect_true(any(grepl(
+    '"../data/processed/study-1_stage-processed_codebook.csv"',
+    processing,
+    fixed = TRUE
+  )))
   expect_true(any(grepl("study_*/data/outputs/plots/*", readLines(file.path(root, ".gitignore")), fixed = TRUE)))
 
   res <- validator(project_root = root)
@@ -493,7 +497,7 @@ test_that("multi-study by_type skeleton is created and validated", {
   expect_false(dir.exists(file.path(root, "study_1")))
   processing <- readLines(file.path(root, "code", "study_2", "processing.qmd"))
   expect_true(any(grepl(
-    '"../../data/processed/study_2/processed_codebook.csv"',
+    '"../../data/processed/study_2/study-2_stage-processed_codebook.csv"',
     processing,
     fixed = TRUE
   )))

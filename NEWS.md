@@ -10,6 +10,18 @@
 
 ## New features
 
+* New `write_dataset_description()`, which creates or updates a psych-DS
+  `dataset_description.json` in the project root from the project's
+  codebooks: each codebook row becomes a `PropertyValue` in
+  `variableMeasured`, so every variable is still described only once. The
+  generated `processing.qmd` demonstrates it in a chunk that is not run by
+  default, and explains that the codebook .csv is the simpler option while
+  the .json is the more psych-DS compliant one. Thanks to @bleonar5 for
+  proposing psych-DS metadata support (#2).
+* Generated data and codebook file names now follow the psych-DS convention
+  of `key-value` pairs ending in `_data`, e.g.,
+  `study-1_stage-processed_data.csv` and
+  `study-1_stage-processed_codebook.csv`.
 * `validator()` gains `exclude_dirs`, to ignore further directories.
 
 # psychdsish 0.2.0

@@ -84,8 +84,9 @@ and R code in \code{.R} files and in \code{.qmd}/\code{.Rmd} code chunks contain
 no \code{setwd()} calls or absolute file paths (e.g., \code{"~/"},
 \code{"/Users/"}, \code{"C:/"}). Comment lines are ignored.
 \item \strong{Codebook checks} — Every data file in \verb{data/processed/} has a
-codebook named after it (e.g., \code{study_1_data.csv} ->
-\code{study_1_codebook.csv}, any data file extension), and \code{.csv}/\code{.tsv}
+codebook named after it (e.g., \verb{study-1_stage-processed_data.csv}
+-> \verb{study-1_stage-processed_codebook.csv}, any data file
+extension), and \code{.csv}/\code{.tsv}
 codebooks no longer contain the "TO BE COMPLETED MANUALLY"
 placeholders written by the codebook chunk in \code{code/processing.qmd}.
 }

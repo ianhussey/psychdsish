@@ -238,6 +238,27 @@ github_repository_name/
 
 In both layouts, the root-level files (README, LICENSE, `CITATION.cff`, `.gitignore`, `_quarto.yml`, `.Rproj`) are shared, and `_quarto.yml` renders each study's processing and analysis files in turn. To add a study later, increase `studies` in `tools/project_creator.qmd` and render it, then add the new files to `_quarto.yml`. `validator()` detects the layout automatically. Analyses that combine studies can go in a root-level `code/` folder (by study) or in `code/` outside the study subfolders (by type).
 
+## Codebooks and psych-DS metadata
+
+`code/processing.qmd` contains a chunk that creates a codebook (data dictionary) from the processed data: it fills in each variable's type, number of missing values, and range or values, and marks `description`, `units`, and `coding` as "TO BE COMPLETED MANUALLY" for the user to fill in. Re-rendering keeps their entries and adds any new variables.
+
+Generated data and codebook file names follow the [psych-DS](https://psych-ds.github.io/) convention of `key-value` pairs ending in `_data`, e.g., `study-1_stage-processed_data.csv` and `study-1_stage-processed_codebook.csv`.
+
+Users then have two options, and need only one:
+
+- **The codebook .csv** is the simpler route: easy to fill in and read, and all that `validator()` requires.
+- **`dataset_description.json`** is the more psych-DS compliant route. `write_dataset_description()` writes it in the project root from the codebooks, mapping each codebook row onto a `PropertyValue` in `variableMeasured`, so each variable is still described only once:
+
+``` r
+psychdsish::write_dataset_description(
+  project_root = ".",
+  name = "My study",
+  description = "What the dataset contains"
+)
+```
+
+  `processing.qmd` includes this call in a chunk that is not run by default. Note that psychdsish does not check psych-DS compliance itself: use the [psych-DS validator](https://psych-ds.github.io/validator/) for that.
+
 ## Validation rules checked by `validator()`
 
 A project is **psych-DS(ish)-compliant** if it follows all of the following rules:

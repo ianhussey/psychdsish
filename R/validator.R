@@ -54,8 +54,9 @@
 #'         no `setwd()` calls or absolute file paths (e.g., `"~/"`,
 #'         `"/Users/"`, `"C:/"`). Comment lines are ignored.
 #'   \item **Codebook checks** — Every data file in `data/processed/` has a
-#'         codebook named after it (e.g., `study_1_data.csv` ->
-#'         `study_1_codebook.csv`, any data file extension), and `.csv`/`.tsv`
+#'         codebook named after it (e.g., `study-1_stage-processed_data.csv`
+#'         -> `study-1_stage-processed_codebook.csv`, any data file
+#'         extension), and `.csv`/`.tsv`
 #'         codebooks no longer contain the "TO BE COMPLETED MANUALLY"
 #'         placeholders written by the codebook chunk in `code/processing.qmd`.
 #' }
@@ -825,7 +826,7 @@ validator <- function(
           paste0(
             "Add a codebook for: ",
             paste(rel(undocumented), collapse = "; "),
-            ". Name it after the data file, ending in '_codebook' (e.g., study_1_data.csv -> study_1_codebook.csv). ",
+            ". Name it after the data file, ending in '_codebook' (e.g., study-1_stage-processed_data.csv -> study-1_stage-processed_codebook.csv). ",
             "The processing.qmd template contains a chunk that creates one."
           )
         } else {
