@@ -831,15 +831,17 @@ validator <- function(
 
   # the documentation that belongs to a data file: "<stem>_codebook.<ext>" in
   # the same folder, or the psych-DS sidecar "<stem>.json"
-  json_files <- fs::dir_ls(
-    fs::path(project_root, "data"),
-    type = "file",
-    recurse = TRUE,
-    fail = FALSE
-  )
-  json_files <- as.character(json_files)[
-    tolower(fs::path_ext(json_files)) == "json"
-  ]
+  # data/ lives in a different place in each layout, and need not exist
+  json_dirs <- fs::path(project_root, expand("data"))
+  json_dirs <- json_dirs[fs::dir_exists(json_dirs)]
+  json_files <- unlist(lapply(json_dirs, function(d) {
+    as.character(fs::dir_ls(d, type = "file", recurse = TRUE))
+  }))
+  json_files <- if (is.null(json_files)) {
+    character(0)
+  } else {
+    json_files[tolower(fs::path_ext(json_files)) == "json"]
+  }
   expected_codebook <- function(p) {
     fs::path(fs::path_dir(p), paste0(sub("_data$", "", stem(p)), "_codebook"))
   }

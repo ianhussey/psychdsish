@@ -232,3 +232,32 @@ test_that("validator treats raw data leniently and flags ambiguous codebooks", {
     "Data files are documented in dataset_description.json (psych-DS)" %in% warned_tests(res)
   )
 })
+
+test_that("the psych-DS checks work in a by_study project, where data/ is not at the root", {
+  root <- file.path(tempdir(), paste0("psychdsish_warn_multi_", sample.int(1e6, 1)))
+  create_project_skeleton(root, studies = 2, layout = "by_study", quiet = TRUE)
+  on.exit(unlink(root, recursive = TRUE, force = TRUE), add = TRUE)
+  writeLines(c("# My study", "", "Aims."), file.path(root, "README.md"))
+
+  processed <- file.path(root, "study_1", "data", "processed")
+  write.csv(
+    data.frame(id = 1:2),
+    file.path(processed, "study-1_stage-processed_data.csv"),
+    row.names = FALSE
+  )
+  make_codebook(
+    processed,
+    "study-1_stage-processed",
+    data.frame(variable = "id", description = "Identifier", units = "none", coding = "none")
+  )
+
+  expect_no_warning(res <- validator(project_root = root))
+  expect_length(failed_tests(res), 0)
+  expect_equal(
+    warned_tests(res),
+    "Data files are documented in dataset_description.json (psych-DS)"
+  )
+
+  write_dataset_description(root, name = "Two studies", description = "Demo", quiet = TRUE)
+  expect_length(warned_tests(validator(project_root = root)), 0)
+})
