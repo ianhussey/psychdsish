@@ -43,7 +43,9 @@ psych-DS-ish is an R package that therefore: 1) drops the .json requirement, and
 
 Does this contribute to Standards Proliferation? Yes, unfortunately. 
 
-![](./man/figures/standards_proliferate.png)
+[![xkcd 927: Standards](https://imgs.xkcd.com/comics/standards.png)](https://xkcd.com/927/)
+
+*[xkcd 927: "Standards"](https://xkcd.com/927/) by Randall Munroe, [CC BY-NC 2.5](https://creativecommons.org/licenses/by-nc/2.5/).*
 
 psych-DS-ish makes no attempt to define or maintain the standard itself, which is its weak point and psych-DS's strength. I have no desire to duplicate psych-DS's great work there; psych-DS-ish is intended to be a code tool not a full data standard. psych-DS-ish could be updated in future to bring it more in line with psych-DS, or psych-DS could distribute, fork, or otherwise make use of psych-DS-ish's skeleton generation tool. 
 
@@ -125,9 +127,9 @@ github_repository_name/
 
 ## Creating a new project
 
-**RStudio:** after installing psychdsish, restart RStudio, then go to *File > New Project > New Directory > psych-DS-ish Project*. Enter a directory name, choose whether to create a `_quarto.yml` (on by default), and click *Create Project*. RStudio creates the skeleton below, opens it as a project, and opens `README.md`, `code/processing.qmd`, and `code/analysis.qmd`.
+**GUI option in RStudio:** after installing psychdsish, restart RStudio, then go to *File > New Project > New Directory > psych-DS-ish Project*. Enter a directory name, choose whether to create a `_quarto.yml` (on by default), and click *Create Project*. RStudio creates the skeleton below, opens it as a project, and opens `README.md`, `code/processing.qmd`, and `code/analysis.qmd`.
 
-**Positron, or any other editor:** Positron does not support RStudio project templates, so run this from the R console instead, then open the folder:
+**CLI option in RStudio, Positron, or any other editor:** Run this from the R console, then open the folder:
 
 ``` r
 psychdsish::create_project_skeleton(project_root = "~/git/my_project")
@@ -135,9 +137,9 @@ psychdsish::create_project_skeleton(project_root = "~/git/my_project")
 
 ## Validating a project
 
-**RStudio:** with the project open, click *Addins > Validate psych-DS-ish project* in the toolbar. The results are printed in the console and shown as a colour-coded table in the Viewer pane. To run it with a keyboard shortcut, go to *Tools > Modify Keyboard Shortcuts* and search for "psych-DS-ish".
+**GUI option in RStudio:** with the project open, click *Addins > Validate psych-DS-ish project* in the toolbar. The results are printed in the console and shown as a colour-coded table in the Viewer pane. To run it with a keyboard shortcut, go to *Tools > Modify Keyboard Shortcuts* and search for "psych-DS-ish".
 
-**Positron, or any other editor:** Positron does not support RStudio addins, so run this from the R console in the project root instead:
+**CLI option in RStudio, Positron, or any other editor:** Run this from the R console in the project root:
 
 ``` r
 psychdsish::validator(".")
@@ -279,7 +281,7 @@ You can also use the function directly from the console without needing the .qmd
 
 <br>
 
-Results of `validator()` in a freshly generated project skeleton - note that some tests are not printed unless failed. (Screenshot from an earlier version: a fresh skeleton now fails one check, as a reminder to replace the template text in its README.)
+Results of `validator()` in a freshly generated project skeleton - note that some tests are not printed unless failed. 
 
 ![](./man/figures/validator.png)
 

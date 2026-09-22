@@ -18,6 +18,13 @@
 #' @return (Invisibly) the `data.frame` returned by
 #'   [create_project_skeleton()].
 #'
+#' @examples
+#' # What RStudio runs for a new two-study project
+#' project <- file.path(tempdir(), "wizard_project")
+#' create_psychdsish_project(project, studies = "2")
+#' list.files(project)
+#' unlink(project, recursive = TRUE)
+#'
 #' @keywords internal
 #' @export
 create_psychdsish_project <- function(

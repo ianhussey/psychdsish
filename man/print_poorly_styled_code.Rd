@@ -31,14 +31,12 @@ formatting tools, so that users can compare the \emph{before} (poor style) and
 \emph{after} (styled) versions.
 }
 \examples{
-\dontrun{
 # Print the messy code to the console
 print_poorly_styled_code()
 
 # Pass it to styler to see how formatting improves
 styled <- styler::style_text(capture.output(print_poorly_styled_code()))
-cat(styled, sep = "\n")
-}
+styled
 
 }
 \seealso{

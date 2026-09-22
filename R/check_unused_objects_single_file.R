@@ -9,10 +9,17 @@
 #'   Returns an empty data frame if no orphans are found.
 #'
 #' @examples
-#' \dontrun{
-#' check_unused_objects_single_file("temp.R")
-#' check_unused_objects_single_file("analysis.qmd")
-#' }
+#' path <- tempfile(fileext = ".R")
+#' writeLines(
+#'   c(
+#'     "df1 <- data.frame(x = 1:3)",
+#'     "df2 <- transform(df1, y = x * 2) # never used",
+#'     "print(df1)"
+#'   ),
+#'   path
+#' )
+#' check_unused_objects_single_file(path)
+#' unlink(path)
 #'
 #' @export
 check_unused_objects_single_file <- function(path) {

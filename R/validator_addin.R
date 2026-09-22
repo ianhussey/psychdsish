@@ -13,6 +13,12 @@
 #'
 #' @return (Invisibly) the `psychdsish_validation` results from [validator()].
 #'
+#' @examples
+#' project <- file.path(tempdir(), "my_project")
+#' create_project_skeleton(project, quiet = TRUE)
+#' validator_addin(project, viewer = FALSE)
+#' unlink(project, recursive = TRUE)
+#'
 #' @keywords internal
 #' @export
 validator_addin <- function(project_root = NULL, viewer = TRUE) {

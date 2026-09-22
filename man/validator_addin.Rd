@@ -23,4 +23,11 @@ runs \code{\link[=validator]{validator()}} on the open RStudio project (or, if n
 the working directory), prints the results to the console, and shows them
 as a colour-coded table in the Viewer pane.
 }
+\examples{
+project <- file.path(tempdir(), "my_project")
+create_project_skeleton(project, quiet = TRUE)
+validator_addin(project, viewer = FALSE)
+unlink(project, recursive = TRUE)
+
+}
 \keyword{internal}

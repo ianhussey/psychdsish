@@ -5,8 +5,9 @@
 #' and R code chunks embedded in R Markdown or Quarto documents. Certain
 #' directories can be excluded from the search.
 #'
-#' @param root Character scalar. Path to the root directory to search
-#'   (default: current working directory `"."`).
+#' @param root Character scalar. Path to the root directory to search. There
+#'   is no default, because the files found are rewritten: from
+#'   `tools/style_all_files.qmd` in a project, use `"../"`.
 #' @param patterns Character vector of regular expressions for file extensions
 #'   to include. Defaults to common R and Quarto file suffixes.
 #' @param exclude_dirs Character vector of directory names to skip (default:
@@ -29,18 +30,23 @@
 #'   vector is returned invisibly.
 #'
 #' @examples
-#' \dontrun{
-#' # Preview which files would be styled
-#' style_all_files(dry_run = TRUE)
+#' project <- file.path(tempdir(), "style_demo")
+#' dir.create(project)
+#' writeLines("x<-c(1,2 ,3)", file.path(project, "messy.R"))
 #'
-#' # Style all files under the current project
-#' style_all_files()
-#' }
+#' # Preview which files would be styled
+#' style_all_files(project, dry_run = TRUE)
+#'
+#' # Style them
+#' style_all_files(project)
+#' readLines(file.path(project, "messy.R"))
+#'
+#' unlink(project, recursive = TRUE)
 #'
 #' @seealso [styler::style_file()], [styler::style_dir()], [usethis::use_tidy_style()]
 #' @export
 style_all_files <- function(
-  root = ".",
+  root,
   patterns = c("\\.R$", "\\.r$", "\\.Rmd$", "\\.rmd$", "\\.qmd$", "\\.Qmd$"),
   exclude_dirs = c(
     ".git",

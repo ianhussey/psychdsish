@@ -5,7 +5,7 @@
 \title{Create an opinionated project directory skeleton following psych-ds-ish standard}
 \usage{
 create_project_skeleton(
-  project_root = "../",
+  project_root,
   overwrite = FALSE,
   rproj = TRUE,
   quarto_yml = TRUE,
@@ -16,10 +16,9 @@ create_project_skeleton(
 }
 \arguments{
 \item{project_root}{Character scalar. Path to the root directory where
-the project skeleton should be created. Defaults to \code{"../"} on the
-assumption that this function is run from
-"project_name/tools/project_creator.qmd", but can also be run from the
-console.}
+the project skeleton should be created, e.g., \code{"~/git/my_project"} from
+the console, or \code{"../"} from \code{tools/project_creator.qmd} in the project.
+There is no default, so that files are only written where you say.}
 
 \item{overwrite}{Logical. If \code{TRUE}, existing files will be overwritten.
 Defaults to \code{FALSE}.}
@@ -136,21 +135,24 @@ Quarto \code{.qmd} files are pre-filled with:
 }
 }
 \examples{
-\dontrun{
-# A project with two studies, one folder per study
-create_project_skeleton("~/git/my_project", studies = 2)
+# These examples write to a temporary folder; use your project's path instead,
+# e.g., create_project_skeleton("~/git/my_project")
+project <- file.path(tempdir(), "my_project")
+create_project_skeleton(project)
+list.files(project, all.files = TRUE)
 
-# The same, with one subfolder per study inside code/, data/, etc.
-create_project_skeleton("~/git/my_project", studies = 2, layout = "by_type")
-# Create a skeleton in a parent directory
-create_project_skeleton(project_root = "../", overwrite = FALSE)
+# Running it again skips existing files, unless overwrite = TRUE
+create_project_skeleton(project)
 
-# Create in the current working directory and overwrite any existing templates
-create_project_skeleton(project_root = ".", overwrite = TRUE)
+# A project with two studies, one folder per study (study_1/code/, ...)
+two_studies <- file.path(tempdir(), "two_studies")
+create_project_skeleton(two_studies, studies = 2)
 
-# Create in a specified directory
-create_project_skeleton("~/path/to/github_repository_name", overwrite = FALSE)
-}
+# The same, with one subfolder per study inside each folder (code/study_1/, ...)
+by_type <- file.path(tempdir(), "two_studies_by_type")
+create_project_skeleton(by_type, studies = 2, layout = "by_type")
+
+unlink(c(project, two_studies, by_type), recursive = TRUE)
 
 }
 \seealso{

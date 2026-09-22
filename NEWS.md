@@ -49,6 +49,13 @@
   instead of detecting it. A dry run no longer asks for confirmation, and the
   function now returns the paths it deleted, or would delete.
 
+## Breaking changes
+
+* `create_project_skeleton()`, `delete_project_skeleton()`, and
+  `style_all_files()` no longer have a default path, so that they only write
+  or delete files where you say. The generated `tools/*.qmd` files pass
+  `"../"` explicitly, so they are unaffected.
+
 ## Bug fixes
 
 * `delete_project_skeleton()` did not recognise the protected file as being
@@ -68,6 +75,10 @@
 * New GitHub Actions workflow reporting test coverage with `covr`; both
   workflows install Quarto so that the rendering tests run.
 * `cli` and `stats` are now imported, and `covr` is suggested.
+* All examples now run, writing only to `tempdir()`; the example for
+  `check_unused_dependencies()` runs only if Quarto is installed.
+* The package is much smaller: the logo is compressed, and unused images are
+  excluded from the build.
 
 # psychdsish 0.1.3
 

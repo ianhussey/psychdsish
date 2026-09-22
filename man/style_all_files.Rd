@@ -5,7 +5,7 @@
 \title{Style All Code in R, R Markdown, and Quarto Files in a Project}
 \usage{
 style_all_files(
-  root = ".",
+  root,
   patterns = c("\\\\.R$", "\\\\.r$", "\\\\.Rmd$", "\\\\.rmd$", "\\\\.qmd$", "\\\\.Qmd$"),
   exclude_dirs = c(".git", "renv", "_site", "_freeze", ".quarto", "_book", "tools"),
   dry_run = FALSE,
@@ -13,8 +13,9 @@ style_all_files(
 )
 }
 \arguments{
-\item{root}{Character scalar. Path to the root directory to search
-(default: current working directory \code{"."}).}
+\item{root}{Character scalar. Path to the root directory to search. There
+is no default, because the files found are rewritten: from
+\code{tools/style_all_files.qmd} in a project, use \code{"../"}.}
 
 \item{patterns}{Character vector of regular expressions for file extensions
 to include. Defaults to common R and Quarto file suffixes.}
@@ -50,13 +51,18 @@ vector is returned invisibly.
 }
 }
 \examples{
-\dontrun{
-# Preview which files would be styled
-style_all_files(dry_run = TRUE)
+project <- file.path(tempdir(), "style_demo")
+dir.create(project)
+writeLines("x<-c(1,2 ,3)", file.path(project, "messy.R"))
 
-# Style all files under the current project
-style_all_files()
-}
+# Preview which files would be styled
+style_all_files(project, dry_run = TRUE)
+
+# Style them
+style_all_files(project)
+readLines(file.path(project, "messy.R"))
+
+unlink(project, recursive = TRUE)
 
 }
 \seealso{

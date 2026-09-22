@@ -10,3 +10,5 @@
 ^doc$
 ^Meta$
 ^CITATION\.cff$
+^man/figures/logo_orig\.png$
+^man/figures/standards_proliferate\.png$

@@ -21,13 +21,19 @@
 #' with the two columns.
 #'
 #' @examples
-#' \dontrun{
-#' # Scan the current project
-#' check_unused_objects(".")
+#' project <- file.path(tempdir(), "unused_objects_demo")
+#' dir.create(project)
+#' writeLines(
+#'   c(
+#'     "df1 <- data.frame(x = 1:3)",
+#'     "df2 <- transform(df1, y = x * 2) # never used",
+#'     "print(df1)"
+#'   ),
+#'   file.path(project, "analysis.R")
+#' )
+#' check_unused_objects(project)
+#' unlink(project, recursive = TRUE)
 #'
-#' # Show what it finds in a subdirectory
-#' check_unused_objects("R")
-#' }
 #' @export
 check_unused_objects <- function(
   root = ".",

@@ -24,9 +24,27 @@ and returns a single tibble with a \code{file} column and the detected
 \code{possibly_unused_packages}.
 }
 \examples{
-\dontrun{
-res <- check_unused_dependencies(root = "examples")
-res
+\donttest{
+# Renders each document, so requires the Quarto command line tools
+if (!is.null(quarto::quarto_path())) {
+  project <- file.path(tempdir(), "unused_dependencies_demo")
+  dir.create(project)
+  writeLines(
+    c(
+      "---",
+      "title: Demo",
+      "---",
+      "",
+      "```{r}",
+      "library(tools) # attached but never used",
+      "x <- mean(1:10)",
+      "```"
+    ),
+    file.path(project, "analysis.qmd")
+  )
+  print(check_unused_dependencies(project))
+  unlink(project, recursive = TRUE)
+}
 }
 
 }

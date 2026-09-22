@@ -76,26 +76,25 @@
 #' fails, an error is thrown instead.
 #'
 #' @examples
-#' \dontrun{
-#' # Run validation on the parent directory
-#' results <- validator("../")
+#' project <- file.path(tempdir(), "my_project")
+#' create_project_skeleton(project, quiet = TRUE)
 #'
-#' # Pretty-print results in the console
-#' print(results)
+#' # Validate the project and print the results
+#' results <- validator(project)
+#' results
 #'
 #' # Overall result
 #' summary(results)$passed
 #'
-#' # Fail a CI job (e.g., GitHub Actions) if any check fails
-#' validator(".", strict = TRUE)
+#' # Throw an error if any check fails, e.g., to fail a GitHub Actions job
+#' try(validator(project, strict = TRUE))
 #'
-#' # Display results as a styled HTML table
-#' library(knitr)
-#' library(kableExtra)
-#' results |>
-#'   knitr::kable() |>
-#'   kableExtra::kable_classic(full_width = FALSE)
+#' # Display the results as a table, e.g., in a Quarto report
+#' if (requireNamespace("knitr", quietly = TRUE)) {
+#'   knitr::kable(results)
 #' }
+#'
+#' unlink(project, recursive = TRUE)
 #'
 #' @export
 validator <- function(project_root = "../", strict = FALSE) {

@@ -11,13 +11,8 @@
 #' @import quarto
 #' @import rmarkdown
 #'
-#' @examples
-#' \dontrun{
-#' res <- check_unused_dependencies_single("test.qmd")
-#' res
-#' }
-#'
 #' @param path Path to the .qmd or .Rmd file.
+#' @noRd
 #' @return A tibble with one column: possibly_unused_packages
 #'   (packages attached but never called, excluding base defaults).
 #'

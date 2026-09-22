@@ -5,7 +5,7 @@
 \title{Delete a project skeleton while protecting the running file}
 \usage{
 delete_project_skeleton(
-  project_root = "../",
+  project_root,
   require_sentinel = TRUE,
   sentinel_names = c(".ok-to-prune", ".git", ".gitignore", ".here", "_project.yml",
     "_quarto.yml"),
@@ -17,7 +17,9 @@ delete_project_skeleton(
 }
 \arguments{
 \item{project_root}{Path to the project folder whose contents should
-be deleted. Defaults to \code{"../"}.}
+be deleted, e.g., \code{"../"} from \code{tools/project_creator.qmd} in the
+project. There is no default, so that nothing is deleted unless you name
+the folder.}
 
 \item{require_sentinel}{Logical. If \code{TRUE} (default), at least one of
 the files listed in \code{sentinel_names} must exist in the project root,
@@ -90,23 +92,22 @@ keep \code{require_sentinel = TRUE} and \code{confirm = TRUE} for normal use.
 }
 
 \examples{
-\dontrun{
-# Run from a script inside the project (e.g. tools/project_validator.qmd).
+project <- file.path(tempdir(), "my_project")
+create_project_skeleton(project, quiet = TRUE)
+keep <- file.path(project, "tools", "project_creator.qmd")
 
-# Preview what would be deleted from a skeleton project
-delete_project_skeleton("my_project", dry_run = TRUE)
+# Preview what would be deleted
+delete_project_skeleton(project, keep_file = keep, dry_run = TRUE)
 
-# Actually delete (interactive confirmation required)
-delete_project_skeleton("my_project")
+# Delete everything except `keep`. confirm = FALSE skips the typed
+# confirmation: only use it when you are sure.
+delete_project_skeleton(project, keep_file = keep, confirm = FALSE)
+list.files(project, recursive = TRUE)
 
-# Skip the interactive prompt (still requires a detectable current file)
-delete_project_skeleton("my_project", confirm = FALSE)
+# From a script inside the project (e.g., tools/project_creator.qmd), the
+# running file is detected and protected, so `keep_file` is not needed:
+# delete_project_skeleton(project_root = "../")
 
-# From the console: name the file to keep
-delete_project_skeleton(
-  "my_project",
-  keep_file = "my_project/tools/project_creator.qmd",
-  dry_run = TRUE
-)
-}
+unlink(project, recursive = TRUE)
+
 }

@@ -37,4 +37,12 @@ New Directory > psych-DS-ish Project} creates a project skeleton with
 \code{\link[=create_project_skeleton]{create_project_skeleton()}}. It is not intended to be called directly; use
 \code{\link[=create_project_skeleton]{create_project_skeleton()}} instead.
 }
+\examples{
+# What RStudio runs for a new two-study project
+project <- file.path(tempdir(), "wizard_project")
+create_psychdsish_project(project, studies = "2")
+list.files(project)
+unlink(project, recursive = TRUE)
+
+}
 \keyword{internal}

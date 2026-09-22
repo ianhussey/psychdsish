@@ -40,9 +40,9 @@ If you know the path to your project you can call it directly from the console:
 create_project_skeleton(project_root = "~/git/my_project")
 ```
 
-The default `project_root = "../"` assumes you are running it from a
-`project_name/tools/project_creator.qmd` file, so that the skeleton is written
-to the project root one level up.
+There is no default `project_root`, so files are only written where you say.
+From the `tools/project_creator.qmd` file that the skeleton creates, use
+`project_root = "../"` to write to the project root one level up.
 
 Here is a complete, self-contained round-trip inside a temporary directory:
 
