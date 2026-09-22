@@ -19,10 +19,6 @@ customise_readme <- function(root) {
   )
 }
 
-failed_tests <- function(res) {
-  as.character(res$Test[res$Status == "FAIL"])
-}
-
 git_run <- function(root, ...) {
   system2("git", c("-C", shQuote(root), ...), stdout = FALSE, stderr = FALSE)
 }
@@ -77,8 +73,9 @@ test_that("a fresh skeleton fails only the README placeholder check", {
     failed_tests(res),
     "README has been customised (no template placeholders)"
   )
-  # not a git repository, nothing rendered, and no processed data yet
-  expect_equal(summary(res)$n_skip, 4L)
+  # not a git repository, nothing rendered, and no data files yet
+  expect_equal(summary(res)$n_skip, 6L)
+  expect_equal(summary(res)$n_warn, 0L)
 
   customise_readme(root)
   expect_true(summary(validator(project_root = root))$passed)
@@ -330,7 +327,7 @@ test_that("validator checks processed data files have completed codebooks", {
   write.csv(data.frame(x = 1:3), file.path(processed, "study_1_data.csv"))
   saveRDS(data.frame(x = 1:3), file.path(processed, "study_2.rds"))
   res <- validator(project_root = root)
-  expect_equal(failed_tests(res), "Every processed data file has a codebook")
+  expect_equal(failed_tests(res), "Every data file has a codebook")
   details <- res$`Details / Guidance`[res$Status == "FAIL"]
   expect_match(details, "study_1_data.csv", fixed = TRUE)
   expect_match(details, "study_2.rds", fixed = TRUE)

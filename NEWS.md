@@ -1,4 +1,4 @@
-# psychdsish 0.2.1
+# psychdsish 0.2.2
 
 ## Bug fixes
 
@@ -22,6 +22,17 @@
   of `key-value` pairs ending in `_data`, e.g.,
   `study-1_stage-processed_data.csv` and
   `study-1_stage-processed_codebook.csv`.
+* `validator()` gains psych-DS checks, reported as a new `"WARN"` status:
+  data file names that do not follow the psych-DS convention of `key-value`
+  pairs ending in `_data`; data files described only by a `.csv`/`.xlsx`
+  codebook rather than in `dataset_description.json`; and codebooks or
+  `.json` files that cannot be matched to the data file they describe.
+  Warnings are not failures, so they do not affect `strict = TRUE`.
+* `validator()` now checks that every data file under `data/` is documented,
+  not only those in `data/processed/`, accepting a codebook file, a psych-DS
+  sidecar `.json`, or the columns being listed in
+  `dataset_description.json`. Undocumented raw data is a warning, since raw
+  data often arrives with names and contents that cannot be changed.
 * `validator()` gains `exclude_dirs`, to ignore further directories.
 
 # psychdsish 0.2.0

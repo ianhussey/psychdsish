@@ -130,3 +130,105 @@ test_that("write_dataset_description finds codebooks in multi-study projects", {
   # "id" appears in both codebooks and is written once
   expect_equal(res$variables, c("id", "score_1", "score_2"))
 })
+
+# validator()'s psych-DS checks, which report WARN rather than FAIL
+
+test_that("validator warns about psych-DS file names and csv-only codebooks", {
+  root <- file.path(tempdir(), paste0("psychdsish_warn_", sample.int(1e6, 1)))
+  create_project_skeleton(root, quiet = TRUE)
+  on.exit(unlink(root, recursive = TRUE, force = TRUE), add = TRUE)
+  writeLines(c("# My study", "", "Aims."), file.path(root, "README.md"))
+  processed <- file.path(root, "data", "processed")
+
+  # a psych-DS name, documented by a .csv codebook only
+  write.csv(
+    data.frame(id = 1:2, rt = c(250, 300)),
+    file.path(processed, "stage-processed_data.csv"),
+    row.names = FALSE
+  )
+  make_codebook(
+    processed,
+    "stage-processed",
+    data.frame(
+      variable = c("id", "rt"),
+      description = c("Identifier", "Response time"),
+      units = c("none", "ms"),
+      coding = "none"
+    )
+  )
+
+  res <- validator(project_root = root)
+  expect_length(failed_tests(res), 0)
+  expect_true(
+    "Data files are documented in dataset_description.json (psych-DS)" %in%
+      warned_tests(res)
+  )
+  # a warning is not a failure
+  expect_true(summary(res)$passed)
+  expect_no_error(validator(project_root = root, strict = TRUE))
+
+  # writing the metadata clears the warning
+  write_dataset_description(root, name = "My study", description = "Demo", quiet = TRUE)
+  expect_length(warned_tests(validator(project_root = root)), 0)
+
+  # a name that does not follow the psych-DS convention
+  write.csv(
+    data.frame(a = 1),
+    file.path(processed, "results_final.csv"),
+    row.names = FALSE
+  )
+  res <- validator(project_root = root)
+  expect_true(
+    "Processed data file names follow the psych-DS convention" %in% warned_tests(res)
+  )
+  expect_match(
+    res$`Details / Guidance`[res$Test == "Processed data file names follow the psych-DS convention"],
+    "results_final.csv",
+    fixed = TRUE
+  )
+})
+
+test_that("validator treats raw data leniently and flags ambiguous codebooks", {
+  root <- file.path(tempdir(), paste0("psychdsish_warn2_", sample.int(1e6, 1)))
+  create_project_skeleton(root, quiet = TRUE)
+  on.exit(unlink(root, recursive = TRUE, force = TRUE), add = TRUE)
+  writeLines(c("# My study", "", "Aims."), file.path(root, "README.md"))
+  raw <- file.path(root, "data", "raw")
+  processed <- file.path(root, "data", "processed")
+
+  # raw data straight from a platform: warned about, never failed
+  write.csv(data.frame(a = 1), file.path(raw, "Qualtrics_export.csv"), row.names = FALSE)
+  res <- validator(project_root = root)
+  expect_length(failed_tests(res), 0)
+  expect_setequal(
+    warned_tests(res),
+    c(
+      "Every raw data file has a codebook",
+      "Raw data file names follow the psych-DS convention"
+    )
+  )
+
+  # a codebook that does not match any data file
+  write.csv(data.frame(a = 1), file.path(processed, "stage-processed_data.csv"), row.names = FALSE)
+  make_codebook(processed, "stage-processed", data.frame(variable = "a", description = "A", units = "none", coding = "none"))
+  write.csv(data.frame(variable = "a"), file.path(processed, "codebook.csv"), row.names = FALSE)
+  writeLines("{}", file.path(processed, "notes.json"))
+  res <- validator(project_root = root)
+  details <- res$`Details / Guidance`[
+    res$Test == "Codebooks are named after the data file they describe"
+  ]
+  expect_match(details, "codebook.csv", fixed = TRUE)
+  expect_match(details, "notes.json", fixed = TRUE)
+  expect_match(details, "_codebook", fixed = TRUE)
+
+  # a psych-DS sidecar is not ambiguous, and documents its data file
+  file.remove(file.path(processed, "codebook.csv"), file.path(processed, "notes.json"))
+  writeLines('{"variableMeasured": ["a"]}', file.path(processed, "stage-processed_data.json"))
+  res <- validator(project_root = root)
+  expect_false(
+    "Codebooks are named after the data file they describe" %in% warned_tests(res)
+  )
+  expect_false(
+    "Data files are documented in dataset_description.json (psych-DS)" %in% warned_tests(res)
+  )
+})

@@ -294,7 +294,9 @@ A project is **psych-DS(ish)-compliant** if it follows all of the following rule
 | **Rendered .html**        | Newer than its `.qmd` | A `.qmd` changed since its `.html` was last rendered |
 | **README.md**             | Customised | Still contains the template placeholders from `create_project_skeleton()` |
 | **R code** (`.R` files and `.qmd`/`.Rmd` code chunks) | Relative paths, e.g., `../data/raw/` | `setwd()` calls; absolute paths, e.g., `"~/"`, `"/Users/"`, `"C:/"` |
-| **Codebooks**            | Every data file in `data/processed/` has a codebook named after it (e.g., `study_1_data.csv` -> `study_1_codebook.csv`), with no "TO BE COMPLETED MANUALLY" placeholders left (`.csv`/`.tsv` codebooks) | Data files without a codebook; placeholders left in a codebook |
+| **Codebooks**            | Every data file under `data/` is documented: a codebook named after it (e.g., `study-1_stage-processed_data.csv` -> `study-1_stage-processed_codebook.csv`), a psych-DS sidecar `.json`, or its columns listed in `dataset_description.json`, with no "TO BE COMPLETED MANUALLY" placeholders left | Data files without a codebook; placeholders left in a codebook |
+
+Three further checks are reported as `WARN` rather than `FAIL`, because they concern psych-DS compliance rather than the project being broken: data file names that do not follow the psych-DS `key-value` convention (leniently for raw data, which often cannot be renamed), data files described only by a `.csv`/`.xlsx` codebook rather than in `dataset_description.json`, and codebooks or `.json` files that cannot be matched to the data file they describe. Warnings do not affect `validator(strict = TRUE)`.
 
 Checks that cannot be run (e.g., the raw data check in a project that is not a git repository) are reported as `SKIP`. Use `validator(strict = TRUE)` to throw an error if any check fails, e.g., to fail a GitHub Actions job.
 

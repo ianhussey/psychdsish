@@ -28,18 +28,19 @@ Defaults to \code{FALSE}.}
 }
 \value{
 A tibble of class \code{psychdsish_validation} with one row per check
-(failures first, then skipped checks), containing:
+(failures first, then warnings and skipped checks), containing:
 \describe{
 \item{Test}{Description of the check performed.}
-\item{Status}{\code{"PASS"}, \code{"FAIL"}, or \code{"SKIP"} (the check could not be
-run).}
+\item{Status}{\code{"PASS"}, \code{"FAIL"}, \code{"WARN"} (worth fixing, but not a
+failure), or \code{"SKIP"} (the check could not be run).}
 \item{Details / Guidance}{Additional information, such as instructions
 for fixing failures or offending file paths.}
 }
 Printing it shows coloured PASS/FAIL results with guidance for failures.
 \code{summary()} returns a list with \code{project_root}, \code{layout} (\code{"single"},
 \code{"by_study"}, or \code{"by_type"}), \code{studies} (the study folder names),
-\code{n_pass}, \code{n_fail}, \code{n_skip}, and \code{passed} (\code{TRUE} if no check failed). If \code{strict = TRUE} and any check
+\code{n_pass}, \code{n_fail}, \code{n_warn}, \code{n_skip}, and \code{passed} (\code{TRUE} if no check
+failed). If \code{strict = TRUE} and any check
 fails, an error is thrown instead.
 }
 \description{
@@ -83,18 +84,31 @@ the template placeholders written by \code{\link[=create_project_skeleton]{creat
 and R code in \code{.R} files and in \code{.qmd}/\code{.Rmd} code chunks contains
 no \code{setwd()} calls or absolute file paths (e.g., \code{"~/"},
 \code{"/Users/"}, \code{"C:/"}). Comment lines are ignored.
-\item \strong{Codebook checks} — Every data file in \verb{data/processed/} has a
-codebook named after it (e.g., \verb{study-1_stage-processed_data.csv}
--> \verb{study-1_stage-processed_codebook.csv}, any data file
-extension), and \code{.csv}/\code{.tsv}
+\item \strong{Codebook checks} — Every data file under \verb{data/} is documented,
+by a codebook named after it (e.g.,
+\verb{study-1_stage-processed_data.csv} ->
+\verb{study-1_stage-processed_codebook.csv}, any data file extension),
+a psych-DS sidecar (\verb{study-1_stage-processed_data.json}), or its
+columns being listed in \code{dataset_description.json}. \code{.csv}/\code{.tsv}
 codebooks no longer contain the "TO BE COMPLETED MANUALLY"
-placeholders written by the codebook chunk in \code{code/processing.qmd}.
+placeholders written by the codebook chunk in
+\code{code/processing.qmd}. Undocumented raw data is a warning rather
+than a failure.
+\item \strong{psych-DS checks} (reported as \code{"WARN"}) — Data file names follow
+the psych-DS convention of \code{key-value} pairs ending in \verb{_data}
+(leniently for raw data, which often cannot be renamed); data files
+are described in \code{dataset_description.json} rather than only in a
+\code{.csv}/\code{.xlsx} codebook (see \code{\link[=write_dataset_description]{write_dataset_description()}}); and
+every codebook or \code{.json} under \verb{data/} can be matched to the data
+file it describes.
 }
 
 Checks that cannot be run are reported as \code{"SKIP"} rather than \code{"PASS"},
 e.g., the raw data check when the project is not a git repository, or the
-\code{.html} check when nothing has been rendered yet. Skipped checks do not
-cause \code{strict = TRUE} to fail.
+\code{.html} check when nothing has been rendered yet. Checks that are worth
+acting on but are not failures, such as a project that works but is not
+fully psych-DS compliant, are reported as \code{"WARN"}. Neither causes
+\code{strict = TRUE} to fail.
 }
 \examples{
 project <- file.path(tempdir(), "my_project")
