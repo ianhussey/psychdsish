@@ -1,0 +1,12 @@
+Binding: create_psychdsish_project
+Title: psych-DS-ish Project
+Subtitle: Create a research project following the psych-DS-ish standard
+Caption: Create a psych-DS-ish research project
+Icon: psychdsish.png
+OpenFiles: README.md, code/processing.qmd, code/analysis.qmd
+
+Parameter: quarto_yml
+Widget: CheckboxInput
+Label: Create _quarto.yml to render processing then analysis in order
+Default: On
+Position: left

@@ -123,6 +123,16 @@ github_repository_name/
 
 
 
+## Creating a new project
+
+**RStudio:** after installing psychdsish, restart RStudio, then go to *File > New Project > New Directory > psych-DS-ish Project*. Enter a directory name, choose whether to create a `_quarto.yml` (on by default), and click *Create Project*. RStudio creates the skeleton below, opens it as a project, and opens `README.md`, `code/processing.qmd`, and `code/analysis.qmd`.
+
+**Positron, or any other editor:** Positron does not support RStudio project templates, so run this from the R console instead, then open the folder:
+
+``` r
+psychdsish::create_project_skeleton(project_root = "~/git/my_project")
+```
+
 ## Skeleton project structure created by `create_project_skeleton()`
 
 This is the skeleton that  `create_project_skeleton()` creates:

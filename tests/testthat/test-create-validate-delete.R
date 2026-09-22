@@ -156,3 +156,20 @@ test_that("validator print, summary, and strict mode work", {
     "No spaces in filenames"
   )
 })
+
+test_that("RStudio project template binding creates a valid skeleton", {
+  root <- file.path(tempdir(), paste0("psychdsish_template_", sample.int(1e6, 1)))
+  on.exit(unlink(root, recursive = TRUE, force = TRUE), add = TRUE)
+
+  dcf <- system.file(
+    "rstudio", "templates", "project", "psychdsish.dcf",
+    package = "psychdsish"
+  )
+  expect_true(nzchar(dcf))
+  expect_equal(unname(read.dcf(dcf)[1, "Binding"]), "create_psychdsish_project")
+
+  create_psychdsish_project(root, quarto_yml = FALSE)
+  expect_true(file.exists(file.path(root, paste0(basename(root), ".Rproj"))))
+  expect_false(file.exists(file.path(root, "_quarto.yml")))
+  expect_true(summary(validator(project_root = root))$passed)
+})
