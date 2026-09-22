@@ -8,7 +8,7 @@
 \description{
 \if{html}{\figure{logo.png}{options: style='float: right' alt='logo' width='120'}}
 
-Creates a standardised R project skeleton that is loosely inspired by the 'psych-DS' data standard (\url{https://psych-ds.github.io/}) for psychological data, and checks whether an existing project follows the same conventions. The layout is not fully 'psych-DS' compliant -- most notably it drops the JSON metadata requirement -- hence 'psych-DS-ish'. Alongside the directory structure it generates Quarto templates, a README, a licence, and a '.gitignore' with sensible defaults, and adds extra conventions for reproducibility and common 'tidyverse' workflows. A validator function reports whether a project follows the conventions and, where it does not, how to fix it. See Hussey (2026) \doi{10.5281/zenodo.21441984} for the archived software record.
+Creates a standardised project skeleton for research projects in R that is loosely inspired by the 'psych-DS' data standard (\url{https://psych-ds.github.io/}) for psychological data, and checks whether an existing project follows the same conventions. The layout is not fully 'psych-DS' compliant -- most notably it drops the JSON metadata requirement -- hence 'psych-DS-ish'. Single- and multi-study projects are supported. Alongside the directory structure it generates 'Quarto' templates for processing and analysis code (including a codebook for the processed data), a README, a licence, a citation file, a '.gitignore' with sensible defaults, and a 'Quarto' project file that renders the code in order. A validator function reports whether a project follows the conventions, including whether raw data have changed since they were first committed to 'Git' and whether rendered reports are up to date, and, where it does not, how to fix it. 'RStudio' users can create projects from the New Project wizard and validate them from the Addins menu. See Hussey (2026) \doi{10.5281/zenodo.21441984} for the archived software record.
 }
 \seealso{
 Useful links:
@@ -19,7 +19,7 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: Ian Hussey \email{ian.hussey@unibe.ch} (\href{https://orcid.org/0000-0001-8906-7559}{ORCID})
+\strong{Maintainer}: Ian Hussey \email{ian.hussey@unibe.ch} (\href{https://orcid.org/0000-0001-8906-7559}{ORCID}) [copyright holder]
 
 }
 \keyword{internal}

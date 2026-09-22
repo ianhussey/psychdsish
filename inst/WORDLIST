@@ -1,4 +1,5 @@
 Addins
+CLI
 CMD
 Codebooks
 Customised
@@ -15,7 +16,6 @@ RStudio
 Rmd
 Struhl
 addin
-addins
 codebook
 codebooks
 colour
@@ -31,11 +31,13 @@ filesystem
 gitignore
 ish
 ish's
+js
 json
 knitr
 licence
 licenced
 md
+packrat
 png
 pre
 preprints
@@ -44,12 +46,15 @@ rds
 readme
 recognise
 regexes
+renv
 sav
+se
 standardised
 subfolder
 subfolders
 summarisation
 tibble
+tidyver
 tidyverse
 tsv
 validator
