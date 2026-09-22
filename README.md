@@ -287,13 +287,6 @@ Results of `validator()` in a freshly generated project skeleton - note that som
 
 <br>
 
-
-
-## TODO
-
-- add argument to validator to toggle assessment of psych-DS vs psych-ds-ish? Or if psych-DS release their own R validator, adopt it here?
-- add checker for data files present but neither read nor written
-
 ## License
 
 Code is MIT licenced © Ian Hussey (2025-2026)
