@@ -131,6 +131,8 @@ This is the skeleton that  `create_project_skeleton()` creates:
 github_repository_name/
 ├── .gitattributes  # ignores .html files to help github detect R repos
 ├── .gitignore  # includes reasonable defaults
+├── _quarto.yml  # renders code/processing.qmd then code/analysis.qmd via `quarto render` (skip with `quarto_yml = FALSE`)
+├── CITATION.cff  # citation metadata template: gives a 'Cite this repository' button on GitHub
 ├── github_repository_name.Rproj  # RStudio project file, named after the project folder (skip with `rproj = FALSE`)
 ├── LICENSE  # CC BY 4.0
 ├── readme.md  # including overview, structure, reproduciblity instructions, license, suggested citation

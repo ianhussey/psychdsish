@@ -34,6 +34,8 @@ test_that("create_project_skeleton builds the expected directories and files", {
 
   expect_true(file.exists(file.path(root, ".gitignore")))
   expect_true(file.exists(file.path(root, "LICENSE")))
+  expect_true(file.exists(file.path(root, "_quarto.yml")))
+  expect_true(file.exists(file.path(root, "CITATION.cff")))
   expect_true(file.exists(file.path(root, paste0(basename(root), ".Rproj"))))
   for (f in c("project_creator.qmd", "project_validator.qmd", "style_all_files.qmd")) {
     expect_true(file.exists(file.path(root, "tools", f)), info = f)
@@ -118,4 +120,15 @@ test_that("create_project_skeleton reports created, skipped, and overwritten fil
   )
   expect_true(all(third$status[third$type == "file"] == "overwritten"))
   expect_silent(create_project_skeleton(project_root = root, quiet = TRUE))
+})
+
+test_that("create_project_skeleton respects quarto_yml = FALSE", {
+  root <- file.path(tempdir(), paste0("psychdsish_noquarto_", sample.int(1e6, 1)))
+  on.exit(unlink(root, recursive = TRUE, force = TRUE), add = TRUE)
+
+  create_project_skeleton(project_root = root, quarto_yml = FALSE, quiet = TRUE)
+  expect_false(file.exists(file.path(root, "_quarto.yml")))
+
+  readme <- readLines(file.path(root, "README.md"), warn = FALSE)
+  expect_false(any(grepl("_quarto.yml", readme, fixed = TRUE)))
 })

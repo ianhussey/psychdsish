@@ -21,6 +21,9 @@
 #' @param rproj Logical. If `TRUE` (default), an RStudio project file named
 #'   after the project root directory (e.g., `my_project.Rproj`) is created,
 #'   unless the project root already contains an `.Rproj` file.
+#' @param quarto_yml Logical. If `TRUE` (default), a `_quarto.yml` file is
+#'   created that makes the project a Quarto project, so that rendering the
+#'   project renders `code/processing.qmd` and then `code/analysis.qmd`.
 #' @param quiet Logical. If `FALSE` (default), a one-line summary of what was
 #'   created, overwritten, or skipped is printed as a message.
 #'
@@ -54,6 +57,11 @@
 #'   \item `README.md` - skeleton README describing project aims and structure
 #'   \item `<project_name>.Rproj` - RStudio project file that does not save or
 #'     restore the workspace (if `rproj = TRUE`)
+#'   \item `_quarto.yml` - Quarto project file listing the `.qmd` files to
+#'     render, in order, when the whole project is rendered (processing
+#'     before analysis) (if `quarto_yml = TRUE`)
+#'   \item `CITATION.cff` - citation metadata template; GitHub uses it to show
+#'     a "Cite this repository" button
 #'   \item `.gitignore` - ignores R history, session data, caches, temp files,
 #'     OS-specific clutter, and large output directories
 #'   \item `code/analysis.qmd` - Quarto analysis template with metadata, setup
@@ -111,6 +119,7 @@ create_project_skeleton <- function(
   project_root = "../",
   overwrite = FALSE,
   rproj = TRUE,
+  quarto_yml = TRUE,
   quiet = FALSE
 ) {
   # minimal dependencies: base R only
@@ -198,47 +207,113 @@ create_project_skeleton <- function(
   )
   write_if_absent(license_path, license_text)
 
-  # helper for string concatenation
-  `%+%` <- function(a, b) paste0(a, b)
-
   readme_path <- join(project_root, "README.md")
+  readme_structure <- c(
+    "code/                 # analysis and processing scripts (.qmd/.Rmd) and their rendered .html",
+    "reports/              # thesis, manuscript, preprints, slides, etc.",
+    "data/",
+    "  raw/                # raw data and codebooks/data dictionaries (should be read-only, except for removal of private data)",
+    "  processed/          # cleaned datasets and codebooks/data dictionaries",
+    "  outputs/            # outputs of the processing and analyses scripts",
+    "    plots/            # plots and figures, .png/.pdf/etc.",
+    "    fitted_models/    # fitted model objects, eg from brms, lme4, lavaan, etc.",
+    "    results/          # tables and matrices, eg for descriptive statistics, formatted statistical results, correlation tables",
+    "methods/              # measures, implementations (qualtrics, lab.js, psychopy files, etc.), .docx files with items, etc.",
+    "preregistration/      # preregistration documents",
+    "tools/                # utility scripts, e.g., project validator and code styler",
+    "CITATION.cff          # citation metadata: gives the 'Cite this repository' button on GitHub",
+    "LICENSE               # suggested: CC BY 4.0",
+    "README.md             # this file",
+    if (rproj) {
+      "*.Rproj               # RStudio project file: open this to work on the project in RStudio"
+    },
+    if (quarto_yml) {
+      "_quarto.yml           # lists which .qmd files to render, in order, when rendering the whole project"
+    }
+  )
+
+  readme_render <- if (quarto_yml) {
+    c(
+      "`_quarto.yml` lists the files to render and the order to render them in (processing before analysis). Render the whole project using any one of these options:",
+      "",
+      if (rproj) {
+        "- **RStudio:** open the `.Rproj` file, then click *Build > Render Project* in the Build pane (top right)."
+      },
+      if (rproj) {
+        "- **R console:** with the working directory set to the project root (automatic when the `.Rproj` file is open), run `quarto::quarto_render()`."
+      } else {
+        "- **R console:** with the working directory set to the project root, run `quarto::quarto_render()`."
+      },
+      "- **Terminal:** from the project root, run `quarto render`.",
+      "",
+      "Rendering stops at the first error, so analyses never run on stale or partially processed data. Each file runs with its own folder as the working directory, so paths in the code are relative to `code/` (e.g., `../data/raw/`).",
+      "",
+      "Clicking *Render* in an individual `.qmd` file renders only that file. Use it while developing, but render the whole project before sharing results.",
+      "",
+      "### Adding new files",
+      "If you add another processing or analysis file (e.g., `code/processing_study_2.qmd`), add it to the `render:` list in `_quarto.yml` in the position it should run, otherwise it will not be rendered with the rest of the project."
+    )
+  } else {
+    c(
+      "Render the files in this order, e.g., by clicking *Render* in each file:",
+      "",
+      "1. `code/processing.qmd`",
+      "2. `code/analysis.qmd`",
+      "",
+      "Each file runs with its own folder as the working directory, so paths in the code are relative to `code/` (e.g., `../data/raw/`)."
+    )
+  }
+
   readme_text <- paste(
-    "# Project Title",
-    "",
-    "## Overview",
-    "Add aims, data sources, and reproduction steps.",
-    "",
-    "## Structure",
-    "```\n" %+%
-      "code/                 # analysis and processing scripts (.qmd/.Rmd) and their rendered .html\n" %+%
-      "reports/              # thesis, manuscript, preprints, slides, etc.\n" %+%
-      "data/\n" %+%
-      "  raw/                # raw data and codebooks/data dictionaries (should be read-only, except for removal of private data)\n" %+%
-      "  processed/          # cleaned datasets and codebooks/data dictionaries\n" %+%
-      "  outputs/            # outputs of the processing and analyses scripts\n" %+%
-      "    plots/            # plots and figures, .png/.pdf/etc.\n" %+%
-      "    fitted_models/    # fitted model objects, eg from brms, lme4, lavaan, etc.\n" %+%
-      "    results/          # tables and matrices, eg for descriptive statistics, formatted statistical results, correlation tables\n" %+%
-      "methods/              # measures, implementations (qualtrics, lab.js, psychopy files, etc.), .docx files with items, etc.\n" %+%
-      "preregistration/      # preregistration documents\n" %+%
-      "tools/                # utility scripts, e.g., project validator and code styler\n" %+%
-      "LICENSE               # suggested: CC BY 4.0\n" %+%
-      "README.md             # this file\n" %+%
-      "*.Rproj               # RStudio project file: open this to work on the project in RStudio\n" %+%
+    c(
+      "# Project Title",
+      "",
+      "## Overview",
+      "Add aims, data sources, and reproduction steps.",
+      "",
+      "## Structure",
       "```",
-    "",
-    "## Reproducibility",
-    "- Place raw data in `data/raw/`.",
-    "- Write processing in `code/processing.qmd` and analyses in `code/analysis.qmd`.",
-    "- Re-run data processing with `code/processing.qmd`. This will create `code/processing.html` and files in `data/processed/`.",
-    "- Re-run analyses with `code/analysis.qmd`. This will create `code/analysis.html`, plots in `data/outputs/plots/`, fitted model objects in `data/outputs/fitted_models/`, and tables in `data/outputs/results/`.",
-    "",
-    "## License",
-    "CC BY 4.0 (see `LICENSE`).",
-    "",
-    "## Suggested citation",
-    "Authors (Year). Title. URL.",
-    sep = "\n"
+      readme_structure,
+      "```",
+      "",
+      "## Reproducibility",
+      "",
+      "### Workflow",
+      "- Raw data lives in `data/raw/` and is never modified by code.",
+      "- `code/processing.qmd` reads the raw data and writes cleaned datasets to `data/processed/`. Rendering it also creates `code/processing.html`.",
+      "- `code/analysis.qmd` reads the processed data and writes plots to `data/outputs/plots/`, fitted model objects to `data/outputs/fitted_models/`, and tables to `data/outputs/results/`. Rendering it also creates `code/analysis.html`.",
+      "",
+      "### Reproduce all results",
+      readme_render,
+      "",
+      "## License",
+      "CC BY 4.0 (see `LICENSE`).",
+      "",
+      "## Suggested citation",
+      "Authors (Year). Title. URL.",
+      "",
+      "`CITATION.cff` holds this citation in a machine-readable format. On GitHub, it adds a *Cite this repository* button to the repository page (right-hand sidebar) that gives APA and BibTeX citations, and Zenodo reads it when archiving a release.",
+      "",
+      "To customise it, open `CITATION.cff` and replace the placeholders:",
+      "",
+      "- `title`: the project title.",
+      "- `authors`: one `- family-names:` / `given-names:` block per author, in author order. Add each author's ORCID or delete the `orcid:` line.",
+      "- `date-released`: the date of the version people should cite.",
+      "- `repository-code`: the repository URL.",
+      "- `doi`: uncomment and fill in once you have one (e.g., from a Zenodo release).",
+      "",
+      "Keep it consistent with the citation above. See https://citation-file-format.github.io for all available fields.",
+      "",
+      "After editing, check that the file is still valid. GitHub silently drops the *Cite this repository* button if it is not. From the project root, in the R console, run:",
+      "",
+      "```r",
+      "# install.packages(\"cffr\")",
+      "cffr::cff_validate(\"CITATION.cff\")",
+      "```",
+      "",
+      "This reports whether the file is valid and, if not, which fields are wrong."
+    ),
+    collapse = "\n"
   )
   write_if_absent(readme_path, readme_text)
 
@@ -256,6 +331,7 @@ create_project_skeleton <- function(
     ".Rproj.user/",
     "",
     "# Quarto / R Markdown caches",
+    ".quarto/",
     "_cache/",
     "*/_cache/",
     "*.knit.md",
@@ -289,6 +365,55 @@ create_project_skeleton <- function(
     sep = "\n"
   )
   write_if_absent(gitattributes_path, gitattributes_text)
+
+  # --- _quarto.yml ---
+  # defines the files rendered by `quarto render` and the order they run in
+  if (quarto_yml) {
+    quarto_yml_path <- join(project_root, "_quarto.yml")
+    quarto_yml_text <- paste(
+      "# Rendering the project (RStudio: Build > Render Project;",
+      "# R console: quarto::quarto_render(); terminal: quarto render)",
+      "# renders the files below in the order they are listed.",
+      "# Add new .qmd files to this list in the order they should run.",
+      "project:",
+      "  type: default",
+      "  render:",
+      "    - code/processing.qmd",
+      "    - code/analysis.qmd",
+      "  # run each file with its own folder as the working directory",
+      "  execute-dir: file",
+      "",
+      sep = "\n"
+    )
+    write_if_absent(quarto_yml_path, quarto_yml_text)
+  }
+
+  # --- CITATION.cff ---
+  cff_path <- join(project_root, "CITATION.cff")
+  cff_text <- paste(
+    "# Citation metadata for this project, in Citation File Format (CFF).",
+    "# On GitHub, this file adds a 'Cite this repository' button to the",
+    "# repository page, which gives APA and BibTeX citations. Zenodo also",
+    "# reads it when archiving a GitHub release.",
+    "#",
+    "# To customise: replace the placeholder values below, add one",
+    "# '- family-names:' block per author, and uncomment 'doi' once you have",
+    "# one. Documentation: https://citation-file-format.github.io",
+    "cff-version: 1.2.0",
+    "message: \"If you use this project, please cite it as below.\"",
+    "title: \"title goes here\"",
+    "authors:",
+    "  - family-names: \"family name goes here\"",
+    "    given-names: \"given name goes here\"",
+    "    orcid: \"https://orcid.org/0000-0000-0000-0000\"",
+    paste0("date-released: \"", format(Sys.Date(), "%Y-%m-%d"), "\""),
+    "license: CC-BY-4.0",
+    "repository-code: \"https://github.com/username/repository\"",
+    "# doi: 10.5281/zenodo.0000000",
+    "",
+    sep = "\n"
+  )
+  write_if_absent(cff_path, cff_text)
 
   # --- .Rproj ---
   rproj_path <- character(0)

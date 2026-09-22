@@ -8,6 +8,7 @@ create_project_skeleton(
   project_root = "../",
   overwrite = FALSE,
   rproj = TRUE,
+  quarto_yml = TRUE,
   quiet = FALSE
 )
 }
@@ -24,6 +25,10 @@ Defaults to \code{FALSE}.}
 \item{rproj}{Logical. If \code{TRUE} (default), an RStudio project file named
 after the project root directory (e.g., \code{my_project.Rproj}) is created,
 unless the project root already contains an \code{.Rproj} file.}
+
+\item{quarto_yml}{Logical. If \code{TRUE} (default), a \verb{_quarto.yml} file is
+created that makes the project a Quarto project, so that rendering the
+project renders \code{code/processing.qmd} and then \code{code/analysis.qmd}.}
 
 \item{quiet}{Logical. If \code{FALSE} (default), a one-line summary of what was
 created, overwritten, or skipped is printed as a message.}
@@ -81,6 +86,11 @@ The following files are created (if not already present):
 \item \code{README.md} - skeleton README describing project aims and structure
 \item \verb{<project_name>.Rproj} - RStudio project file that does not save or
 restore the workspace (if \code{rproj = TRUE})
+\item \verb{_quarto.yml} - Quarto project file listing the \code{.qmd} files to
+render, in order, when the whole project is rendered (processing
+before analysis) (if \code{quarto_yml = TRUE})
+\item \code{CITATION.cff} - citation metadata template; GitHub uses it to show
+a "Cite this repository" button
 \item \code{.gitignore} - ignores R history, session data, caches, temp files,
 OS-specific clutter, and large output directories
 \item \code{code/analysis.qmd} - Quarto analysis template with metadata, setup
