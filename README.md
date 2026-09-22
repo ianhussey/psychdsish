@@ -179,6 +179,63 @@ github_repository_name/
 
 
 
+## Multi-study projects
+
+For projects with more than one study, set `studies`, and choose a `layout`:
+
+``` r
+# one folder per study (default)
+create_project_skeleton("~/git/my_project", studies = 2)
+
+# one subfolder per study inside each folder
+create_project_skeleton("~/git/my_project", studies = 2, layout = "by_type")
+```
+
+In the RStudio New Project wizard, set *Number of studies* and *Multi-study layout*.
+
+`layout = "by_study"` gives each study the single-study structure, so paths in the code are the same as in a single-study project (e.g., `../data/raw/`):
+
+```text
+github_repository_name/
+├── study_1/
+│   ├── code/
+│   │   ├── analysis.qmd
+│   │   └── processing.qmd
+│   ├── data/
+│   │   ├── outputs/
+│   │   ├── processed/
+│   │   └── raw/
+│   ├── methods/
+│   └── preregistration/
+├── study_2/  # same structure as study_1/
+├── reports/  # shared by all studies
+└── tools/
+```
+
+`layout = "by_type"` keeps one `code/`, `data/`, etc., with a subfolder per study inside each, so paths in the code gain a level (e.g., `../../data/raw/study_1/`):
+
+```text
+github_repository_name/
+├── code/
+│   ├── study_1/
+│   │   ├── analysis.qmd
+│   │   └── processing.qmd
+│   └── study_2/
+├── data/
+│   ├── outputs/
+│   │   ├── fitted_models/study_1/, study_2/
+│   │   ├── plots/study_1/, study_2/
+│   │   └── results/study_1/, study_2/
+│   ├── processed/study_1/, study_2/
+│   └── raw/study_1/, study_2/
+├── methods/study_1/, study_2/
+├── preregistration/study_1/, study_2/
+├── reports/  # shared by all studies
+└── tools/
+```
+
+In both layouts, the root-level files (README, LICENSE, `CITATION.cff`, `.gitignore`, `_quarto.yml`, `.Rproj`) are shared, and `_quarto.yml` renders each study's processing and analysis files in turn. To add a study later, increase `studies` in `tools/project_creator.qmd` and render it, then add the new files to `_quarto.yml`. `validator()` detects the layout automatically. Analyses that combine studies can go in a root-level `code/` folder (by study) or in `code/` outside the study subfolders (by type).
+
 ## Validation rules checked by `validator()`
 
 A project is **psych-DS(ish)-compliant** if it follows all of the following rules:

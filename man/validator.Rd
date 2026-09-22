@@ -26,8 +26,9 @@ run).}
 for fixing failures or offending file paths.}
 }
 Printing it shows coloured PASS/FAIL results with guidance for failures.
-\code{summary()} returns a list with \code{project_root}, \code{n_pass}, \code{n_fail},
-\code{n_skip}, and \code{passed} (\code{TRUE} if no check failed). If \code{strict = TRUE} and any check
+\code{summary()} returns a list with \code{project_root}, \code{layout} (\code{"single"},
+\code{"by_study"}, or \code{"by_type"}), \code{studies} (the study folder names),
+\code{n_pass}, \code{n_fail}, \code{n_skip}, and \code{passed} (\code{TRUE} if no check failed). If \code{strict = TRUE} and any check
 fails, an error is thrown instead.
 }
 \description{
@@ -39,6 +40,15 @@ and common analysis workflows, including Quarto file templates and
 a \code{.gitignore} file. It does not comply with psych-ds's .json requirement.
 }
 \details{
+The project's layout is detected from its folders: multi-study "by study"
+if there are \verb{study_1/}, \verb{study_2/}, etc. folders at the project root,
+multi-study "by type" if there are such folders inside \verb{code/},
+\verb{data/raw/}, etc., and single-study otherwise (see
+\code{\link[=create_project_skeleton]{create_project_skeleton()}}). The checks below are applied to each study's
+folders. In multi-study projects, \code{.qmd}, \code{.Rmd}, and \code{.R} files for
+analyses that combine studies may also be placed in a root-level \verb{code/}
+folder (by study) or anywhere in \verb{code/} (by type).
+
 The validator performs several categories of checks:
 \itemize{
 \item \strong{Required directories} — Ensures that expected top-level and

@@ -10,3 +10,16 @@ Widget: CheckboxInput
 Label: Create _quarto.yml to render processing then analysis in order
 Default: On
 Position: left
+
+Parameter: studies
+Widget: TextInput
+Label: Number of studies
+Default: 1
+Position: right
+
+Parameter: layout
+Widget: SelectInput
+Label: Multi-study layout (if more than 1 study)
+Fields: by_study, by_type
+Default: by_study
+Position: right

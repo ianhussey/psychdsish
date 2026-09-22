@@ -398,3 +398,151 @@ test_that("processing.qmd codebook chunk creates and updates a codebook", {
   expect_equal(cb$description, c("Age in years", "TO BE COMPLETED MANUALLY"))
   expect_equal(cb$values[cb$variable == "group"], "a; b")
 })
+
+make_multi <- function(layout, studies = 2) {
+  root <- file.path(
+    tempdir(),
+    paste0("psychdsish_", layout, "_", sample.int(1e6, 1))
+  )
+  create_project_skeleton(
+    project_root = root,
+    studies = studies,
+    layout = layout,
+    quiet = TRUE
+  )
+  root
+}
+
+test_that("layout helpers map folders and relative paths", {
+  expect_equal(psychdsish:::layout_path("data/raw", "study_2", "by_study"), "study_2/data/raw")
+  expect_equal(psychdsish:::layout_path("data/raw", "study_2", "by_type"), "data/raw/study_2")
+  expect_equal(psychdsish:::layout_path("reports", "study_2", "by_type"), "reports")
+  expect_equal(psychdsish:::layout_path("data", "study_2", "by_type"), "data")
+  expect_equal(psychdsish:::rel_path("study_1/code", "study_1/data/raw"), "../data/raw")
+  expect_equal(
+    psychdsish:::rel_path("code/study_1", "data/processed/study_1"),
+    "../../data/processed/study_1"
+  )
+  expect_equal(
+    psychdsish:::sort_studies(c("study_10", "study_2", "study_1")),
+    c("study_1", "study_2", "study_10")
+  )
+  expect_error(create_project_skeleton(tempdir(), studies = 0), "studies")
+})
+
+test_that("multi-study by_study skeleton is created and validated", {
+  root <- make_multi("by_study")
+  on.exit(unlink(root, recursive = TRUE, force = TRUE), add = TRUE)
+
+  for (s in c("study_1", "study_2")) {
+    expect_true(file.exists(file.path(root, s, "code", "processing.qmd")))
+    expect_true(file.exists(file.path(root, s, "data", "raw", ".gitkeep")))
+    expect_true(dir.exists(file.path(root, s, "data", "outputs", "plots")))
+    expect_true(dir.exists(file.path(root, s, "methods")))
+  }
+  expect_true(dir.exists(file.path(root, "reports")))
+  expect_false(dir.exists(file.path(root, "code")))
+  expect_false(dir.exists(file.path(root, "data")))
+
+  yml <- readLines(file.path(root, "_quarto.yml"))
+  expect_equal(
+    trimws(sub("^\\s*- ", "", grep("^\\s*- ", yml, value = TRUE))),
+    c(
+      "study_1/code/processing.qmd",
+      "study_1/code/analysis.qmd",
+      "study_2/code/processing.qmd",
+      "study_2/code/analysis.qmd"
+    )
+  )
+  creator <- readLines(file.path(root, "tools", "project_creator.qmd"))
+  expect_true(any(grepl('studies = 2, layout = "by_study"', creator, fixed = TRUE)))
+  processing <- readLines(file.path(root, "study_1", "code", "processing.qmd"))
+  expect_true(any(grepl('"../data/processed/processed_codebook.csv"', processing, fixed = TRUE)))
+  expect_true(any(grepl("study_*/data/outputs/plots/*", readLines(file.path(root, ".gitignore")), fixed = TRUE)))
+
+  res <- validator(project_root = root)
+  expect_equal(summary(res)$layout, "by_study")
+  expect_equal(summary(res)$studies, c("study_1", "study_2"))
+  expect_equal(
+    failed_tests(res),
+    "README has been customised (no template placeholders)"
+  )
+  expect_output(print(res), "by study", fixed = TRUE)
+
+  # data files belong in each study's data/; combined analyses may use code/
+  customise_readme(root)
+  dir.create(file.path(root, "code"))
+  writeLines("x <- 1", file.path(root, "code", "combined.qmd"))
+  expect_true(summary(validator(project_root = root))$passed)
+  writeLines("a", file.path(root, "study_1", "code", "oops.csv"))
+  expect_true("No data files stored under study_*/code or code" %in% failed_tests(validator(project_root = root)))
+})
+
+test_that("multi-study by_type skeleton is created and validated", {
+  root <- make_multi("by_type")
+  on.exit(unlink(root, recursive = TRUE, force = TRUE), add = TRUE)
+
+  for (s in c("study_1", "study_2")) {
+    expect_true(file.exists(file.path(root, "code", s, "analysis.qmd")))
+    expect_true(file.exists(file.path(root, "data", "raw", s, ".gitkeep")))
+    expect_true(dir.exists(file.path(root, "data", "outputs", "results", s)))
+    expect_true(dir.exists(file.path(root, "preregistration", s)))
+  }
+  expect_false(dir.exists(file.path(root, "study_1")))
+  processing <- readLines(file.path(root, "code", "study_2", "processing.qmd"))
+  expect_true(any(grepl(
+    '"../../data/processed/study_2/processed_codebook.csv"',
+    processing,
+    fixed = TRUE
+  )))
+  expect_true(any(grepl("Study 2: processing", processing, fixed = TRUE)))
+  readme <- readLines(file.path(root, "README.md"))
+  expect_true(any(grepl("`code/study_1/processing.qmd`", readme, fixed = TRUE)))
+  expect_false(any(grepl("@@", readme, fixed = TRUE)))
+
+  res <- validator(project_root = root)
+  expect_equal(summary(res)$layout, "by_type")
+  expect_equal(
+    failed_tests(res),
+    "README has been customised (no template placeholders)"
+  )
+
+  # correctly placed data files pass; data under code/ fails
+  customise_readme(root)
+  writeLines("a", file.path(root, "data", "raw", "study_2", "raw.csv"))
+  writeLines("a", file.path(root, "data", "outputs", "results", "study_1", "table.csv"))
+  expect_true(summary(validator(project_root = root))$passed)
+  writeLines("a", file.path(root, "code", "study_1", "oops.csv"))
+  expect_setequal(
+    failed_tests(validator(project_root = root)),
+    c("All .csv files reside in data", "No data files stored under code")
+  )
+})
+
+test_that("re-running with more studies adds studies without changing others", {
+  root <- make_multi("by_study")
+  on.exit(unlink(root, recursive = TRUE, force = TRUE), add = TRUE)
+
+  res <- create_project_skeleton(
+    project_root = root,
+    studies = 3,
+    layout = "by_study",
+    quiet = TRUE
+  )
+  expect_true(file.exists(file.path(root, "study_3", "code", "analysis.qmd")))
+  expect_equal(
+    res$status[res$path == "study_3/code/analysis.qmd"],
+    "created"
+  )
+  expect_equal(res$status[res$path == "study_1/code/analysis.qmd"], "skipped")
+  expect_equal(summary(validator(project_root = root))$studies, paste0("study_", 1:3))
+})
+
+test_that("RStudio template binding passes the number of studies and layout", {
+  root <- file.path(tempdir(), paste0("psychdsish_template_multi_", sample.int(1e6, 1)))
+  on.exit(unlink(root, recursive = TRUE, force = TRUE), add = TRUE)
+
+  create_psychdsish_project(root, studies = "2", layout = "by_type")
+  expect_true(dir.exists(file.path(root, "code", "study_2")))
+  expect_error(create_psychdsish_project(root, studies = "two"), "whole number")
+})

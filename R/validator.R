@@ -15,6 +15,15 @@
 #'   Defaults to `FALSE`.
 #'
 #' @details
+#' The project's layout is detected from its folders: multi-study "by study"
+#' if there are `study_1/`, `study_2/`, etc. folders at the project root,
+#' multi-study "by type" if there are such folders inside `code/`,
+#' `data/raw/`, etc., and single-study otherwise (see
+#' [create_project_skeleton()]). The checks below are applied to each study's
+#' folders. In multi-study projects, `.qmd`, `.Rmd`, and `.R` files for
+#' analyses that combine studies may also be placed in a root-level `code/`
+#' folder (by study) or anywhere in `code/` (by type).
+#'
 #' The validator performs several categories of checks:
 #' \itemize{
 #'   \item **Required directories** — Ensures that expected top-level and
@@ -61,8 +70,9 @@
 #'         for fixing failures or offending file paths.}
 #' }
 #' Printing it shows coloured PASS/FAIL results with guidance for failures.
-#' `summary()` returns a list with `project_root`, `n_pass`, `n_fail`,
-#' `n_skip`, and `passed` (`TRUE` if no check failed). If `strict = TRUE` and any check
+#' `summary()` returns a list with `project_root`, `layout` (`"single"`,
+#' `"by_study"`, or `"by_type"`), `studies` (the study folder names),
+#' `n_pass`, `n_fail`, `n_skip`, and `passed` (`TRUE` if no check failed). If `strict = TRUE` and any check
 #' fails, an error is thrown instead.
 #'
 #' @examples
@@ -98,6 +108,16 @@ validator <- function(project_root = "../", strict = FALSE) {
     fail = FALSE,
     all = TRUE
   )
+
+  # single study, or multi-study by study (study_1/code/) or by type
+  # (code/study_1/): folders are mapped from their single-study path
+  detected <- detect_layout(project_root)
+  lay <- detected$layout
+  studies <- detected$studies
+  expand <- function(logicals) layout_expand(logicals, lay, studies)
+  label <- function(logicals) {
+    unique(vapply(logicals, layout_label, "", layout = lay))
+  }
 
   # --- Helpers ---
   mk_test <- function(test, passed, details = "") {
@@ -152,20 +172,9 @@ validator <- function(project_root = "../", strict = FALSE) {
   )
 
   # --- 1) Required directories (must exist) ---
-  required_dirs <- c(
-    "code",
-    "data",
-    "data/raw",
-    "data/processed",
-    "data/outputs",
-    "data/outputs/plots",
-    "data/outputs/fitted_models",
-    "data/outputs/results",
-    "methods",
-    "reports",
-    #"reports/preprint",
-    #"reports/presentations",
-    "preregistration"
+  required_dirs <- setdiff(
+    layout_all_dirs(lay, if (lay == "single") "study_1" else studies),
+    "tools"
   )
   for (d in required_dirs) {
     exists_dir <- fs::dir_exists(fs::path(project_root, d))
@@ -314,7 +323,7 @@ validator <- function(project_root = "../", strict = FALSE) {
   # HTML restriction: only under code/ or methods/
   html_files <- list_ext("html")
   if (length(html_files)) {
-    allowed_dirs <- c("code", "methods")
+    allowed_dirs <- expand(c("code", "methods"))
     html_ok <- all(starts_with_any(html_files, allowed_dirs))
     offenders <- character(0)
     if (!html_ok) {
@@ -326,7 +335,10 @@ validator <- function(project_root = "../", strict = FALSE) {
     results <- dplyr::bind_rows(
       results,
       mk_test(
-        "All .html files are under code/ or methods/",
+        paste0(
+          "All .html files are under ",
+          paste(label(c("code", "methods")), collapse = " or ")
+        ),
         html_ok,
         if (!html_ok) {
           paste0(
@@ -342,7 +354,8 @@ validator <- function(project_root = "../", strict = FALSE) {
 
   check_constraint <- function(rule, ext) {
     files <- list_ext(ext)
-    rel <- fs::path_rel(files, start = project_root)
+    shown <- label(rule$must_be_in)
+    rule$must_be_in <- expand(rule$must_be_in)
 
     # 3a) Required presence (if requested)
     if (isTRUE(rule$must_exist_in_each) && length(rule$must_be_in) > 0) {
@@ -385,7 +398,7 @@ validator <- function(project_root = "../", strict = FALSE) {
               if (length(rule$must_be_in)) {
                 paste0(
                   " files reside in ",
-                  paste(rule$must_be_in, collapse = ", ")
+                  paste(shown, collapse = ", ")
                 )
               } else {
                 " files are absent"
@@ -430,14 +443,13 @@ validator <- function(project_root = "../", strict = FALSE) {
       "rds"
     )
     under_code <- all_paths[
-      startsWith(fs::path_dir(all_paths), fs::path(project_root, "code")) &
-        fs::is_file(all_paths)
+      starts_with_any(all_paths, expand("code")) & fs::is_file(all_paths)
     ]
     offenders <- under_code[tolower(fs::path_ext(under_code)) %in% data_exts]
     results <- dplyr::bind_rows(
       results,
       mk_test(
-        "No data files stored under code/",
+        paste0("No data files stored under ", paste(label("code"), collapse = " or ")),
         length(offenders) == 0,
         if (length(offenders)) {
           paste0(
@@ -518,17 +530,23 @@ validator <- function(project_root = "../", strict = FALSE) {
 
   # Raw data unchanged since first committed
   raw_test <- "Raw data unchanged since first committed (git)"
-  if (!exists_ci("data/raw")) {
+  raw_dirs <- expand("data/raw")
+  raw_dirs <- raw_dirs[fs::dir_exists(fs::path(project_root, raw_dirs))]
+  if (length(raw_dirs) == 0) {
     results <- dplyr::bind_rows(
       results,
-      mk_skip(raw_test, "No data/raw/ directory.")
+      mk_skip(raw_test, paste0("No ", label("data/raw"), "/ directory."))
     )
   } else if (!in_git) {
     results <- dplyr::bind_rows(
       results,
       mk_skip(
         raw_test,
-        "Not a git repository (or git is not installed), so the history of data/raw/ cannot be checked."
+        paste0(
+          "Not a git repository (or git is not installed), so the history of ",
+          label("data/raw"),
+          "/ cannot be checked."
+        )
       )
     )
   } else {
@@ -540,10 +558,10 @@ validator <- function(project_root = "../", strict = FALSE) {
       "--format=",
       "--relative",
       "--",
-      "data/raw"
+      shQuote(raw_dirs)
     )
     # uncommitted modifications or deletions of tracked files
-    porcelain <- git("status", "--porcelain", "--", "data/raw")
+    porcelain <- git("status", "--porcelain", "--", shQuote(raw_dirs))
     xy <- substr(porcelain, 1, 2)
     changed_uncommitted <- strip_prefix(
       substring(porcelain[grepl("[MD]", xy)], 4)
@@ -737,12 +755,12 @@ validator <- function(project_root = "../", strict = FALSE) {
     "feather",
     "rds"
   )
-  processed_dir <- fs::path(project_root, "data", "processed")
-  processed_files <- if (fs::dir_exists(processed_dir)) {
-    fs::dir_ls(processed_dir, type = "file", recurse = TRUE)
-  } else {
-    character(0)
-  }
+  processed_dirs <- fs::path(project_root, expand("data/processed"))
+  processed_dirs <- processed_dirs[fs::dir_exists(processed_dirs)]
+  processed_files <- unlist(lapply(processed_dirs, function(d) {
+    as.character(fs::dir_ls(d, type = "file", recurse = TRUE))
+  }))
+  processed_files <- if (is.null(processed_files)) character(0) else processed_files
   processed_files <- processed_files[
     tolower(fs::path_ext(processed_files)) %in% data_exts_processed
   ]
@@ -753,8 +771,8 @@ validator <- function(project_root = "../", strict = FALSE) {
   if (length(data_files) == 0) {
     results <- dplyr::bind_rows(
       results,
-      mk_skip(codebook_test, "No data files in data/processed/."),
-      mk_skip(codebook_done_test, "No data files in data/processed/.")
+      mk_skip(codebook_test, paste0("No data files in ", label("data/processed"), "/.")),
+      mk_skip(codebook_done_test, paste0("No data files in ", label("data/processed"), "/."))
     )
   } else {
     # "x_data.csv" is documented by "x_codebook.<any extension>" in the same
@@ -781,7 +799,7 @@ validator <- function(project_root = "../", strict = FALSE) {
             "Add a codebook for: ",
             paste(rel(undocumented), collapse = "; "),
             ". Name it after the data file, ending in '_codebook' (e.g., study_1_data.csv -> study_1_codebook.csv). ",
-            "code/processing.qmd contains a chunk that creates one."
+            "The processing.qmd template contains a chunk that creates one."
           )
         } else {
           ""
@@ -865,6 +883,8 @@ validator <- function(project_root = "../", strict = FALSE) {
     )
 
   attr(res, "project_root") <- as.character(project_root)
+  attr(res, "layout") <- lay
+  attr(res, "studies") <- studies
   class(res) <- c("psychdsish_validation", class(res))
 
   if (strict && n_fail > 0) {
@@ -894,6 +914,13 @@ print.psychdsish_validation <- function(x, ...) {
   line(cli::rule(left = "psych-DS-ish validation"))
   if (!is.null(smry$project_root)) {
     line(cli::col_grey(smry$project_root))
+  }
+  if (!is.null(smry$layout)) {
+    line(cli::col_grey(paste0(
+      "Layout: ",
+      layout_labels[[smry$layout]],
+      if (length(smry$studies)) paste0(", ", length(smry$studies), " studies")
+    )))
   }
   for (i in seq_len(nrow(x))) {
     if (x$Status[i] == "FAIL") {
@@ -931,6 +958,8 @@ summary.psychdsish_validation <- function(object, ...) {
   n_fail <- sum(object$Status == "FAIL")
   list(
     project_root = attr(object, "project_root"),
+    layout = attr(object, "layout"),
+    studies = attr(object, "studies"),
     n_pass = sum(object$Status == "PASS"),
     n_fail = n_fail,
     n_skip = sum(object$Status == "SKIP"),

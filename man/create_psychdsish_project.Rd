@@ -4,7 +4,13 @@
 \alias{create_psychdsish_project}
 \title{Create a psych-DS-ish project from the RStudio New Project wizard}
 \usage{
-create_psychdsish_project(path, quarto_yml = TRUE, ...)
+create_psychdsish_project(
+  path,
+  quarto_yml = TRUE,
+  studies = "1",
+  layout = "by_study",
+  ...
+)
 }
 \arguments{
 \item{path}{Character scalar. Path to the new project directory, supplied
@@ -12,6 +18,12 @@ by RStudio.}
 
 \item{quarto_yml}{Logical. Passed to \code{\link[=create_project_skeleton]{create_project_skeleton()}}. Set by the
 checkbox in the New Project wizard.}
+
+\item{studies}{Number of studies, as text from the New Project wizard.
+Passed to \code{\link[=create_project_skeleton]{create_project_skeleton()}}.}
+
+\item{layout}{Multi-study layout, \code{"by_study"} or \code{"by_type"}. Passed to
+\code{\link[=create_project_skeleton]{create_project_skeleton()}}.}
 
 \item{...}{Other inputs from the New Project wizard (ignored).}
 }

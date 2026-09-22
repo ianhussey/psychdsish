@@ -24,6 +24,23 @@
 #' @param quarto_yml Logical. If `TRUE` (default), a `_quarto.yml` file is
 #'   created that makes the project a Quarto project, so that rendering the
 #'   project renders `code/processing.qmd` and then `code/analysis.qmd`.
+#' @param studies Whole number. The number of studies in the project.
+#'   Defaults to `1`, a single-study project. With more than one study, each
+#'   study gets its own `code/`, `data/`, `methods/`, and `preregistration/`
+#'   folders, arranged according to `layout`.
+#' @param layout Character. How a multi-study project is arranged (ignored if
+#'   `studies = 1`):
+#'   * `"by_study"` (default): one folder per study at the project root,
+#'     each with the single-study structure, e.g.,
+#'     `study_1/code/processing.qmd` and `study_1/data/raw/`. Paths in the
+#'     code are the same as in a single-study project (e.g., `../data/raw/`).
+#'   * `"by_type"`: one subfolder per study inside each folder, e.g.,
+#'     `code/study_1/processing.qmd` and `data/raw/study_1/`. Paths in the
+#'     code gain a level (e.g., `../../data/raw/study_1/`).
+#'
+#'   In both layouts, `reports/` and `tools/` are shared by all studies at
+#'   the project root. Re-running with a larger `studies` adds the new
+#'   studies' folders and `.qmd` files without changing existing files.
 #' @param quiet Logical. If `FALSE` (default), a one-line summary of what was
 #'   created, overwritten, or skipped is printed as a message.
 #'
@@ -96,6 +113,12 @@
 #'
 #' @examples
 #' \dontrun{
+#' # A project with two studies, one folder per study
+#' create_project_skeleton("~/git/my_project", studies = 2)
+#'
+#' # The same, with one subfolder per study inside code/, data/, etc.
+#' create_project_skeleton("~/git/my_project", studies = 2, layout = "by_type")
+#
 #' # Create a skeleton in a parent directory
 #' create_project_skeleton(project_root = "../", overwrite = FALSE)
 #'
@@ -120,8 +143,22 @@ create_project_skeleton <- function(
   overwrite = FALSE,
   rproj = TRUE,
   quarto_yml = TRUE,
+  studies = 1,
+  layout = c("by_study", "by_type"),
   quiet = FALSE
 ) {
+  studies <- as.integer(studies)
+  if (length(studies) != 1 || is.na(studies) || studies < 1) {
+    stop("`studies` must be a single whole number of 1 or more.", call. = FALSE)
+  }
+  layout <- match.arg(layout)
+  multi <- studies > 1
+  lay <- if (multi) layout else "single"
+  study_ids <- if (multi) study_names(studies) else "study_1"
+
+  # project-relative path of a folder, for study 1 by default
+  P <- function(logical, study = study_ids[1]) layout_path(logical, study, lay)
+
   # minimal dependencies: base R only
   join <- function(...) file.path(..., fsep = .Platform$file.sep)
 
@@ -149,25 +186,16 @@ create_project_skeleton <- function(
       record(path, "file", "skipped")
       return(invisible(FALSE))
     }
+    # text files end with a newline
+    if (nzchar(text) && !endsWith(text, "\n")) {
+      text <- paste0(text, "\n")
+    }
     cat(text, file = path)
     record(path, "file", if (existed) "overwritten" else "created")
     invisible(TRUE)
   }
 
-  dirs <- c(
-    "code",
-    "reports",
-    "data",
-    "data/raw",
-    "data/processed",
-    "data/outputs",
-    "data/outputs/plots",
-    "data/outputs/fitted_models",
-    "data/outputs/results",
-    "methods",
-    "preregistration",
-    "tools" # <- added to ensure the tools dir exists
-  )
+  dirs <- layout_all_dirs(lay, study_ids)
 
   # create all directories
   paths_dir <- file.path(project_root, dirs)
@@ -176,13 +204,9 @@ create_project_skeleton <- function(
   # .gitkeep files so that otherwise-empty directories are tracked by Git
   gitkeep_dirs <- c(
     "reports",
-    "data/raw",
-    "data/processed",
-    "data/outputs/plots",
-    "data/outputs/fitted_models",
-    "data/outputs/results",
-    "methods",
-    "preregistration"
+    unlist(lapply(study_ids, function(s) {
+      vapply(setdiff(layout_study_dirs, "code"), function(d) P(d, s), "")
+    }))
   )
   invisible(lapply(gitkeep_dirs, function(d) {
     write_if_absent(join(project_root, d, ".gitkeep"), "")
@@ -209,17 +233,7 @@ create_project_skeleton <- function(
 
   readme_path <- join(project_root, "README.md")
   readme_structure <- c(
-    "code/                 # analysis and processing scripts (.qmd/.Rmd) and their rendered .html",
-    "reports/              # thesis, manuscript, preprints, slides, etc.",
-    "data/",
-    "  raw/                # raw data and codebooks/data dictionaries (should be read-only, except for removal of private data)",
-    "  processed/          # cleaned datasets and codebooks/data dictionaries",
-    "  outputs/            # outputs of the processing and analyses scripts",
-    "    plots/            # plots and figures, .png/.pdf/etc.",
-    "    fitted_models/    # fitted model objects, eg from brms, lme4, lavaan, etc.",
-    "    results/          # tables and matrices, eg for descriptive statistics, formatted statistical results, correlation tables",
-    "methods/              # measures, implementations (qualtrics, lab.js, psychopy files, etc.), .docx files with items, etc.",
-    "preregistration/      # preregistration documents",
+    readme_tree(lay, study_ids),
     "tools/                # utility scripts, e.g., project validator and code styler",
     "CITATION.cff          # citation metadata: gives the 'Cite this repository' button on GitHub",
     "LICENSE               # suggested: CC BY 4.0",
@@ -231,6 +245,16 @@ create_project_skeleton <- function(
       "_quarto.yml           # lists which .qmd files to render, in order, when rendering the whole project"
     }
   )
+  layout_hint <- switch(
+    lay,
+    by_study = "the other studies' folders are named `study_2/`, `study_3/`, etc.",
+    by_type = "the other studies' folders end in `study_2/`, `study_3/`, etc.",
+    ""
+  )
+  qmd_order <- unlist(lapply(study_ids, function(s) {
+    paste0(P("code", s), c("/processing.qmd", "/analysis.qmd"))
+  }))
+  render_order_list <- paste0(seq_along(qmd_order), ". `", qmd_order, "`")
 
   readme_render <- if (quarto_yml) {
     c(
@@ -246,21 +270,20 @@ create_project_skeleton <- function(
       },
       "- **Terminal:** from the project root, run `quarto render`.",
       "",
-      "Rendering stops at the first error, so analyses never run on stale or partially processed data. Each file runs with its own folder as the working directory, so paths in the code are relative to `code/` (e.g., `../data/raw/`).",
+      "Rendering stops at the first error, so analyses never run on stale or partially processed data. Each file runs with its own folder as the working directory, so paths in the code are relative to the file's folder (e.g., from `@@CODE@@/`, raw data is in `@@REL_RAW@@/`).",
       "",
       "Clicking *Render* in an individual `.qmd` file renders only that file. Use it while developing, but render the whole project before sharing results.",
       "",
       "### Adding new files",
-      "If you add another processing or analysis file (e.g., `code/processing_study_2.qmd`), add it to the `render:` list in `_quarto.yml` in the position it should run, otherwise it will not be rendered with the rest of the project."
+      "If you add another processing or analysis file (e.g., `@@CODE@@/processing_part_2.qmd`), add it to the `render:` list in `_quarto.yml` in the position it should run, otherwise it will not be rendered with the rest of the project."
     )
   } else {
     c(
       "Render the files in this order, e.g., by clicking *Render* in each file:",
       "",
-      "1. `code/processing.qmd`",
-      "2. `code/analysis.qmd`",
+      render_order_list,
       "",
-      "Each file runs with its own folder as the working directory, so paths in the code are relative to `code/` (e.g., `../data/raw/`)."
+      "Each file runs with its own folder as the working directory, so paths in the code are relative to the file's folder (e.g., from `@@CODE@@/`, raw data is in `@@REL_RAW@@/`)."
     )
   }
 
@@ -295,25 +318,38 @@ create_project_skeleton <- function(
       "## Reproducibility",
       "",
       "### Workflow",
-      "- Raw data lives in `data/raw/` and is never modified by code.",
-      "- `code/processing.qmd` reads the raw data and writes cleaned datasets to `data/processed/`. Rendering it also creates `code/processing.html`.",
-      "- `code/analysis.qmd` reads the processed data and writes plots to `data/outputs/plots/`, fitted model objects to `data/outputs/fitted_models/`, and tables to `data/outputs/results/`. Rendering it also creates `code/analysis.html`.",
+      if (multi) {
+        paste0("Each study has its own folders and follows the same workflow. Paths below are for study 1; ", layout_hint)
+      },
+      "- Raw data lives in `@@RAW@@/` and is never modified by code.",
+      "- `@@CODE@@/processing.qmd` reads the raw data and writes cleaned datasets to `@@PROCESSED@@/`. Rendering it also creates `@@CODE@@/processing.html`.",
+      "- `@@CODE@@/analysis.qmd` reads the processed data and writes plots to `@@PLOTS@@/`, fitted model objects to `@@MODELS@@/`, and tables to `@@RESULTS@@/`. Rendering it also creates `@@CODE@@/analysis.html`.",
       "",
+      if (multi) {
+        c(
+          "### Adding a study",
+          paste0(
+            "Increase `studies` in `tools/project_creator.qmd` and render it: this creates the new study's folders and .qmd files, and leaves existing files untouched.",
+            if (quarto_yml) " Then add the new study's processing and analysis files to the `render:` list in `_quarto.yml`." else ""
+          ),
+          ""
+        )
+      },
       "### Reproduce all results",
       readme_render,
       "",
       "## Codebooks",
-      "Every data file in `data/processed/` should have a codebook (data dictionary) that describes each of its variables, named after the data file (e.g., `study_1_data.csv` -> `study_1_codebook.csv`).",
+      "Every data file in `@@PROCESSED_ALL@@/` should have a codebook (data dictionary) that describes each of its variables, named after the data file (e.g., `study_1_data.csv` -> `study_1_codebook.csv`).",
       "",
-      "`code/processing.qmd` contains a chunk that creates the codebook from the processed data. It fills in each variable's type, number of missing values, and range or values, and marks the columns that only you can complete as \"TO BE COMPLETED MANUALLY\":",
+      "`@@CODE@@/processing.qmd` contains a chunk that creates the codebook from the processed data. It fills in each variable's type, number of missing values, and range or values, and marks the columns that only you can complete as \"TO BE COMPLETED MANUALLY\":",
       "",
       "- `description`: what the variable is, e.g., the item wording, or how a score was calculated.",
       "- `units`: e.g., years or milliseconds. Write \"none\" if it does not apply.",
       "- `coding`: what the values mean, e.g., \"1 = strongly disagree to 7 = strongly agree\", reverse-scored items, or missing-value codes such as -99.",
       "",
-      "Open the .csv (e.g., in Excel), replace every placeholder, and save it as .csv. Re-rendering `code/processing.qmd` keeps your entries, adds new variables, and removes variables that are no longer in the data. `psychdsish::validator()` reports data files without a codebook, and codebooks that still contain placeholders.",
+      "Open the .csv (e.g., in Excel), replace every placeholder, and save it as .csv. Re-rendering `@@CODE@@/processing.qmd` keeps your entries, adds new variables, and removes variables that are no longer in the data. `psychdsish::validator()` reports data files without a codebook, and codebooks that still contain placeholders.",
       "",
-      "**Using AI assistants:** an AI assistant can help draft descriptions, but only from information it can actually see. For example, ask it to read `code/processing.qmd` and describe how each variable was created. It cannot know what your items said or what your codes mean, and will guess convincingly if asked. Check every entry against your study materials (e.g., in `methods/`), and do not keep any description you cannot verify.",
+      "**Using AI assistants:** an AI assistant can help draft descriptions, but only from information it can actually see. For example, ask it to read `@@CODE@@/processing.qmd` and describe how each variable was created. It cannot know what your items said or what your codes mean, and will guess convincingly if asked. Check every entry against your study materials (e.g., in `@@METHODS@@/`), and do not keep any description you cannot verify.",
       "",
       "## License",
       "CC BY 4.0 (see `LICENSE`).",
@@ -344,42 +380,61 @@ create_project_skeleton <- function(
     ),
     collapse = "\n"
   )
+  readme_tokens <- c(
+    "@@CODE@@" = P("code"),
+    "@@RAW@@" = P("data/raw"),
+    "@@PROCESSED_ALL@@" = layout_label("data/processed", lay),
+    "@@PROCESSED@@" = P("data/processed"),
+    "@@PLOTS@@" = P("data/outputs/plots"),
+    "@@MODELS@@" = P("data/outputs/fitted_models"),
+    "@@RESULTS@@" = P("data/outputs/results"),
+    "@@METHODS@@" = P("methods"),
+    "@@REL_RAW@@" = rel_path(P("code"), P("data/raw"))
+  )
+  for (tok in names(readme_tokens)) {
+    readme_text <- gsub(tok, readme_tokens[[tok]], readme_text, fixed = TRUE)
+  }
+
   write_if_absent(readme_path, readme_text)
 
   # --- .gitignore ---
   gitignore_path <- join(project_root, ".gitignore")
   gitignore_text <- paste(
-    "# History files",
-    ".Rhistory",
-    ".Rapp.history",
-    "",
-    "# Session Data files",
-    ".RData",
-    "",
-    "# User-specific files",
-    ".Rproj.user/",
-    "",
-    "# Quarto / R Markdown caches",
-    ".quarto/",
-    "_cache/",
-    "*/_cache/",
-    "*.knit.md",
-    "*.utf8.md",
-    "",
-    "# Temporary files",
-    "*.tmp",
-    "*.log",
-    "",
-    "# Large data (use Git LFS or external storage)",
-    "data/outputs/fitted_models/*",
-    "!data/outputs/fitted_models/.gitkeep",
-    "data/outputs/plots/*",
-    "!data/outputs/plots/.gitkeep",
-    "",
-    "# OS-specific files",
-    ".DS_Store",
-    "Thumbs.db",
-    sep = "\n"
+    c(
+      "# History files",
+      ".Rhistory",
+      ".Rapp.history",
+      "",
+      "# Session Data files",
+      ".RData",
+      "",
+      "# User-specific files",
+      ".Rproj.user/",
+      "",
+      "# Quarto / R Markdown caches",
+      ".quarto/",
+      "_cache/",
+      "*/_cache/",
+      "*.knit.md",
+      "*.utf8.md",
+      "",
+      "# Temporary files",
+      "*.tmp",
+      "*.log",
+      "",
+      "# Large data (use Git LFS or external storage)",
+      unlist(lapply(c("data/outputs/fitted_models", "data/outputs/plots"), function(d) {
+        c(
+          paste0(layout_label(d, lay), "/*"),
+          paste0("!", layout_label(d, lay), "/.gitkeep")
+        )
+      })),
+      "",
+      "# OS-specific files",
+      ".DS_Store",
+      "Thumbs.db"
+    ),
+    collapse = "\n"
   )
   write_if_absent(gitignore_path, gitignore_text)
 
@@ -400,19 +455,20 @@ create_project_skeleton <- function(
   if (quarto_yml) {
     quarto_yml_path <- join(project_root, "_quarto.yml")
     quarto_yml_text <- paste(
-      "# Rendering the project (RStudio: Build > Render Project;",
-      "# R console: quarto::quarto_render(); terminal: quarto render)",
-      "# renders the files below in the order they are listed.",
-      "# Add new .qmd files to this list in the order they should run.",
-      "project:",
-      "  type: default",
-      "  render:",
-      "    - code/processing.qmd",
-      "    - code/analysis.qmd",
-      "  # run each file with its own folder as the working directory",
-      "  execute-dir: file",
-      "",
-      sep = "\n"
+      c(
+        "# Rendering the project (RStudio: Build > Render Project;",
+        "# R console: quarto::quarto_render(); terminal: quarto render)",
+        "# renders the files below in the order they are listed.",
+        "# Add new .qmd files to this list in the order they should run.",
+        "project:",
+        "  type: default",
+        "  render:",
+        paste0("    - ", qmd_order),
+        "  # run each file with its own folder as the working directory",
+        "  execute-dir: file",
+        ""
+      ),
+      collapse = "\n"
     )
     write_if_absent(quarto_yml_path, quarto_yml_text)
   }
@@ -510,11 +566,7 @@ create_project_skeleton <- function(
   }
 
   # --- empty .qmd stubs ---
-  qmd_files <- c(
-    "code/analysis.qmd",
-    "code/processing.qmd"
-  )
-  # codebook chunk, added to code/processing.qmd only
+  # codebook chunk, added to each processing.qmd only
   codebook_section <- paste(
     c(
       "# Codebook",
@@ -583,26 +635,9 @@ create_project_skeleton <- function(
     ),
     collapse = "\n"
   )
-  qmd_header <- function(title, codebook = FALSE) {
-    project_root_norm <- normalizePath(
-      project_root,
-      winslash = "/",
-      mustWork = FALSE
-    )
-    title_norm <- normalizePath(title, winslash = "/", mustWork = FALSE)
-    if (startsWith(title_norm, project_root_norm)) {
-      title_clean <- substr(
-        title_norm,
-        nchar(project_root_norm) + 2,
-        nchar(title_norm)
-      )
-    } else {
-      title_clean <- title
-    }
-    title_clean <- sub("^code/", "", title_clean)
-    title_clean <- sub("\\.qmd$", "", title_clean)
+  qmd_header <- function(title, codebook = NULL) {
     paste0(
-      yaml_header(title_clean),
+      yaml_header(title),
       "\n",
       "```{r}\n",
       "#| label: setup\n",
@@ -614,22 +649,36 @@ create_project_skeleton <- function(
       "```{r}\n",
       "# packages and setup here\n",
       "```\n\n",
-      if (codebook) codebook_section else "",
+      if (is.null(codebook)) "" else codebook,
       "# Session info\n",
       "```{r}\n",
       "sessionInfo()\n",
       "```\n"
     )
   }
-  invisible(lapply(qmd_files, function(rel) {
-    write_if_absent(
-      join(project_root, rel),
-      qmd_header(
-        gsub("^code/|\\.qmd$", "", rel),
-        codebook = rel == "code/processing.qmd"
-      )
+  qmd_files <- character(0)
+  for (s in study_ids) {
+    code_dir <- P("code", s)
+    prefix <- if (multi) paste0("Study ", sub("^study_", "", s), ": ") else ""
+    # codebook paths are relative to the .qmd's folder
+    codebook <- gsub(
+      "../data/processed",
+      rel_path(code_dir, P("data/processed", s)),
+      codebook_section,
+      fixed = TRUE
     )
-  }))
+    for (f in c("processing", "analysis")) {
+      rel <- paste0(code_dir, "/", f, ".qmd")
+      qmd_files <- c(qmd_files, rel)
+      write_if_absent(
+        join(project_root, rel),
+        qmd_header(
+          paste0(prefix, f),
+          codebook = if (f == "processing") codebook
+        )
+      )
+    }
+  }
 
   # --- tools/project_validator.qmd ---
   tools_validator_qmd_path <- join(
@@ -656,6 +705,18 @@ create_project_skeleton <- function(
   write_if_absent(tools_validator_qmd_path, tools_validator_qmd_text)
 
   # --- tools/project_creator.qmd ---
+  # re-running it must recreate the same layout, so non-default settings are
+  # written into the call
+  creator_args <- paste(
+    c(
+      'project_root = "../"',
+      if (multi) paste0("studies = ", studies),
+      if (multi) paste0('layout = "', layout, '"'),
+      if (!rproj) "rproj = FALSE",
+      if (!quarto_yml) "quarto_yml = FALSE"
+    ),
+    collapse = ", "
+  )
   tools_creator_qmd_path <- join(project_root, "tools", "project_creator.qmd")
   tools_creator_qmd_text <- paste(
     yaml_header("Create a project skeleton following the psych-ds-ish standard"),
@@ -665,7 +726,7 @@ create_project_skeleton <- function(
     "",
     "library(psychdsish)",
     "",
-    'create_project_skeleton(project_root = "../")',
+    paste0("create_project_skeleton(", creator_args, ")"),
     "",
     "```",
     "",

@@ -9,6 +9,8 @@ create_project_skeleton(
   overwrite = FALSE,
   rproj = TRUE,
   quarto_yml = TRUE,
+  studies = 1,
+  layout = c("by_study", "by_type"),
   quiet = FALSE
 )
 }
@@ -29,6 +31,27 @@ unless the project root already contains an \code{.Rproj} file.}
 \item{quarto_yml}{Logical. If \code{TRUE} (default), a \verb{_quarto.yml} file is
 created that makes the project a Quarto project, so that rendering the
 project renders \code{code/processing.qmd} and then \code{code/analysis.qmd}.}
+
+\item{studies}{Whole number. The number of studies in the project.
+Defaults to \code{1}, a single-study project. With more than one study, each
+study gets its own \verb{code/}, \verb{data/}, \verb{methods/}, and \verb{preregistration/}
+folders, arranged according to \code{layout}.}
+
+\item{layout}{Character. How a multi-study project is arranged (ignored if
+\code{studies = 1}):
+\itemize{
+\item \code{"by_study"} (default): one folder per study at the project root,
+each with the single-study structure, e.g.,
+\code{study_1/code/processing.qmd} and \verb{study_1/data/raw/}. Paths in the
+code are the same as in a single-study project (e.g., \verb{../data/raw/}).
+\item \code{"by_type"}: one subfolder per study inside each folder, e.g.,
+\code{code/study_1/processing.qmd} and \verb{data/raw/study_1/}. Paths in the
+code gain a level (e.g., \verb{../../data/raw/study_1/}).
+}
+
+In both layouts, \verb{reports/} and \verb{tools/} are shared by all studies at
+the project root. Re-running with a larger \code{studies} adds the new
+studies' folders and \code{.qmd} files without changing existing files.}
 
 \item{quiet}{Logical. If \code{FALSE} (default), a one-line summary of what was
 created, overwritten, or skipped is printed as a message.}
@@ -114,6 +137,11 @@ Quarto \code{.qmd} files are pre-filled with:
 }
 \examples{
 \dontrun{
+# A project with two studies, one folder per study
+create_project_skeleton("~/git/my_project", studies = 2)
+
+# The same, with one subfolder per study inside code/, data/, etc.
+create_project_skeleton("~/git/my_project", studies = 2, layout = "by_type")
 # Create a skeleton in a parent directory
 create_project_skeleton(project_root = "../", overwrite = FALSE)
 
