@@ -27,9 +27,23 @@ You can install the development version of `psychdsish` from GitHub with:
 remotes::install_github("ianhussey/psychdsish")
 ```
 
+## Quickstart
+
+In RStudio, from a standing start:
+
+1. **Create a project.** *File > New Project > New Directory > psych-DS-ish Project*. Give it a directory name, set the number of studies if there is more than one, and click *Create Project*. You get the folder structure below, a README, a licence, a `CITATION.cff`, a `.gitignore`, and Quarto templates for processing and analysis code, opened ready to work on.
+
+2. **Write your code.** Put your raw data in `data/raw/`, then write `code/processing.qmd` to clean it and `code/analysis.qmd` to analyse it. Each file runs from its own folder, so paths are relative, e.g. `../data/raw/my_data.csv`. `processing.qmd` includes a chunk that creates a codebook describing every variable in your processed data.
+
+3. **Reproduce all results.** Click *Build > Render Project* (top right). This renders `processing.qmd` and then `analysis.qmd`, in the order listed in `_quarto.yml`, so your results are always regenerated from the raw data in the right order. Rendering stops at the first error.
+
+4. **Check the project.** Click *Addins > Validate psych-DS-ish project*. The results appear in the console and as a table in the Viewer pane, with guidance on how to fix anything that fails.
+
+Not using RStudio? Steps 1, 3 and 4 are `psychdsish::create_project_skeleton("~/git/my_project")`, `quarto::quarto_render()` and `psychdsish::validator(".")` from the R console.
+
 ## Data Standards
 
-I am a big fan of the concept of standards, and the [psych-DS](https://psych-ds.github.io/) data standard specifically. Huge credit to Melissa Klein Struhl for leading it. 
+I am a big fan of the concept of standards, and the [psych-DS](https://psych-ds.github.io/) data standard specifically. Huge credit to Melissa Klein Struhl for leading it and all the psych-DS team.
 
 *But*:
 
@@ -238,6 +252,27 @@ github_repository_name/
 
 In both layouts, the root-level files (README, LICENSE, `CITATION.cff`, `.gitignore`, `_quarto.yml`, `.Rproj`) are shared, and `_quarto.yml` renders each study's processing and analysis files in turn. To add a study later, increase `studies` in `tools/project_creator.qmd` and render it, then add the new files to `_quarto.yml`. `validator()` detects the layout automatically. Analyses that combine studies can go in a root-level `code/` folder (by study) or in `code/` outside the study subfolders (by type).
 
+## Codebooks and psych-DS metadata
+
+`code/processing.qmd` contains a chunk that creates a codebook (data dictionary) from the processed data: it fills in each variable's type, number of missing values, and range or values, and marks `description`, `units`, and `coding` as "TO BE COMPLETED MANUALLY" for the user to fill in. Re-rendering keeps their entries and adds any new variables.
+
+Generated data and codebook file names follow the [psych-DS](https://psych-ds.github.io/) convention of `key-value` pairs ending in `_data`, e.g., `study-1_stage-processed_data.csv` and `study-1_stage-processed_codebook.csv`.
+
+Users then have two options, and need only one:
+
+- **The codebook .csv** is the simpler route: easy to fill in and read, and all that `validator()` requires.
+- **`dataset_description.json`** is the more psych-DS compliant route. `write_dataset_description()` writes it in the project root from the codebooks, mapping each codebook row onto a `PropertyValue` in `variableMeasured`, so each variable is still described only once:
+
+``` r
+psychdsish::write_dataset_description(
+  project_root = ".",
+  name = "My study",
+  description = "What the dataset contains"
+)
+```
+
+  `processing.qmd` includes this call in a chunk that is not run by default. Note that psychdsish does not check psych-DS compliance itself: use the [psych-DS validator](https://psych-ds.github.io/validator/) for that.
+
 ## Validation rules checked by `validator()`
 
 A project is **psych-DS(ish)-compliant** if it follows all of the following rules:
@@ -259,7 +294,9 @@ A project is **psych-DS(ish)-compliant** if it follows all of the following rule
 | **Rendered .html**        | Newer than its `.qmd` | A `.qmd` changed since its `.html` was last rendered |
 | **README.md**             | Customised | Still contains the template placeholders from `create_project_skeleton()` |
 | **R code** (`.R` files and `.qmd`/`.Rmd` code chunks) | Relative paths, e.g., `../data/raw/` | `setwd()` calls; absolute paths, e.g., `"~/"`, `"/Users/"`, `"C:/"` |
-| **Codebooks**            | Every data file in `data/processed/` has a codebook named after it (e.g., `study_1_data.csv` -> `study_1_codebook.csv`), with no "TO BE COMPLETED MANUALLY" placeholders left (`.csv`/`.tsv` codebooks) | Data files without a codebook; placeholders left in a codebook |
+| **Codebooks**            | Every data file under `data/` is documented: a codebook named after it (e.g., `study-1_stage-processed_data.csv` -> `study-1_stage-processed_codebook.csv`), a psych-DS sidecar `.json`, or its columns listed in `dataset_description.json`, with no "TO BE COMPLETED MANUALLY" placeholders left | Data files without a codebook; placeholders left in a codebook |
+
+Three further checks are reported as `WARN` rather than `FAIL`, because they concern psych-DS compliance rather than the project being broken: data file names that do not follow the psych-DS `key-value` convention (leniently for raw data, which often cannot be renamed), data files described only by a `.csv`/`.xlsx` codebook rather than in `dataset_description.json`, and codebooks or `.json` files that cannot be matched to the data file they describe. Warnings do not affect `validator(strict = TRUE)`.
 
 Checks that cannot be run (e.g., the raw data check in a project that is not a git repository) are reported as `SKIP`. Use `validator(strict = TRUE)` to throw an error if any check fails, e.g., to fail a GitHub Actions job.
 

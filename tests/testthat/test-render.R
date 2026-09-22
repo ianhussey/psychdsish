@@ -19,6 +19,11 @@ render_project <- function(layout, studies) {
       code_dir,
       psychdsish:::layout_path("data/processed", s, lay)
     )
+    # psych-DS file names, as the template uses
+    stem <- paste0(
+      if (studies > 1) paste0("study-", sub("^study_", "", s), "_"),
+      "stage-processed"
+    )
     processing <- file.path(root, code_dir, "processing.qmd")
     lines <- readLines(processing)
     at <- which(lines == "# Codebook")
@@ -29,8 +34,9 @@ render_project <- function(layout, studies) {
           "```{r}",
           "data_processed <- data.frame(id = 1:3, score = c(2.5, 3, 4))",
           sprintf(
-            "write.csv(data_processed, '%s/processed_data.csv', row.names = FALSE)",
-            processed
+            "write.csv(data_processed, '%s/%s_data.csv', row.names = FALSE)",
+            processed,
+            stem
           ),
           "```",
           ""
@@ -42,7 +48,7 @@ render_project <- function(layout, studies) {
     analysis <- file.path(root, code_dir, "analysis.qmd")
     cat(
       "\n```{r}",
-      sprintf("d <- read.csv('%s/processed_data.csv')", processed),
+      sprintf("d <- read.csv('%s/%s_data.csv')", processed, stem),
       "stopifnot(nrow(d) == 3)",
       "```\n",
       file = analysis,
@@ -78,7 +84,10 @@ for (case in list(
           codebook <- file.path(
             p$root,
             psychdsish:::layout_path("data/processed", s, p$lay),
-            "processed_codebook.csv"
+            paste0(
+              if (length(p$ids) > 1) paste0("study-", sub("^study_", "", s), "_"),
+              "stage-processed_codebook.csv"
+            )
           )
           expect_equal(read.csv(codebook)$variable, c("id", "score"))
         }

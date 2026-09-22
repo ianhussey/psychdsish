@@ -342,7 +342,7 @@ create_project_skeleton <- function(
       readme_render,
       "",
       "## Codebooks",
-      "Every data file in `@@PROCESSED_ALL@@/` should have a codebook (data dictionary) that describes each of its variables, named after the data file (e.g., `study_1_data.csv` -> `study_1_codebook.csv`).",
+      "Every data file in `@@PROCESSED_ALL@@/` should have a codebook (data dictionary) that describes each of its variables, named after the data file (e.g., `study-1_stage-processed_data.csv` -> `study-1_stage-processed_codebook.csv`). Data file names follow the [psych-DS](https://psych-ds.github.io/) convention: pairs of `key-value` separated by underscores, ending in `_data`.",
       "",
       "`@@CODE@@/processing.qmd` contains a chunk that creates the codebook from the processed data. It fills in each variable's type, number of missing values, and range or values, and marks the columns that only you can complete as \"TO BE COMPLETED MANUALLY\":",
       "",
@@ -351,6 +351,13 @@ create_project_skeleton <- function(
       "- `coding`: what the values mean, e.g., \"1 = strongly disagree to 7 = strongly agree\", reverse-scored items, or missing-value codes such as -99.",
       "",
       "Open the .csv (e.g., in Excel), replace every placeholder, and save it as .csv. Re-rendering `@@CODE@@/processing.qmd` keeps your entries, adds new variables, and removes variables that are no longer in the data. `psychdsish::validator()` reports data files without a codebook, and codebooks that still contain placeholders.",
+      "",
+      "",
+      "### Codebook .csv or dataset_description.json?",
+      "There are two ways to document the variables, and you do not need both:",
+      "",
+      "- **The codebook .csv (simpler).** Quick to fill in, readable in Excel, and all that `psychdsish::validator()` asks for.",
+      "- **`dataset_description.json` (more psych-DS compliant).** Machine-readable metadata in the project root, required by the [psych-DS](https://psych-ds.github.io/) standard. `@@CODE@@/processing.qmd` contains a chunk (not run by default) that writes it from the codebooks with `psychdsish::write_dataset_description()`, so each variable is still described only once. Data file names in this project already follow the psych-DS convention of `key-value` pairs ending in `_data`. To check the project against the standard itself, use the psych-DS validator at <https://psych-ds.github.io/validator/>.",
       "",
       "**Using AI assistants:** an AI assistant can help draft descriptions, but only from information it can actually see. For example, ask it to read `@@CODE@@/processing.qmd` and describe how each variable was created. It cannot know what your items said or what your codes mean, and will guess convincingly if asked. Check every entry against your study materials (e.g., in `@@METHODS@@/`), and do not keep any description you cannot verify.",
       "",
@@ -574,18 +581,19 @@ create_project_skeleton <- function(
     c(
       "# Codebook",
       "",
-      "A codebook (data dictionary) describes every variable in the processed data. The chunk below creates `../data/processed/processed_codebook.csv` from `data_processed`, or updates it if it already exists. The automatic columns (`type`, `n_missing`, `values`) are refreshed on every render. The manual columns (`description`, `units`, `coding`) start as \"TO BE COMPLETED MANUALLY\": open the .csv (e.g., in Excel), replace them for every variable (write \"none\" where a column does not apply), and save it as .csv. Your entries are kept when the codebook is updated.",
+      "A codebook (data dictionary) describes every variable in the processed data. The chunk below creates `@@CB_DIR@@/@@CB_STEM@@_codebook.csv` from `data_processed`, or updates it if it already exists. The automatic columns (`type`, `n_missing`, `values`) are refreshed on every render. The manual columns (`description`, `units`, `coding`) start as \"TO BE COMPLETED MANUALLY\": open the .csv (e.g., in Excel), replace them for every variable (write \"none\" where a column does not apply), and save it as .csv. Your entries are kept when the codebook is updated.",
       "",
       "```{r}",
       "#| label: codebook",
       "",
-      "# Rename `data_processed` and the file names to match your data. Save the data",
-      "# with a name ending in \"_data\" and the codebook with the same name ending in",
-      "# \"_codebook\", so that psychdsish::validator() can match them, e.g.:",
-      "# write.csv(data_processed, \"../data/processed/processed_data.csv\", row.names = FALSE)",
+      "# Rename `data_processed` and the file names to match your data. File names",
+      "# follow the psych-DS convention of key-value pairs ending in \"_data\", e.g.,",
+      "# \"task-stroop_stage-processed_data.csv\". Name the codebook the same way but",
+      "# ending in \"_codebook\", so that psychdsish::validator() can match them:",
+      "# write.csv(data_processed, \"@@CB_DIR@@/@@CB_STEM@@_data.csv\", row.names = FALSE)",
       "",
       "placeholder <- \"TO BE COMPLETED MANUALLY\"",
-      "codebook_path <- \"../data/processed/processed_codebook.csv\"",
+      "codebook_path <- \"@@CB_DIR@@/@@CB_STEM@@_codebook.csv\"",
       "",
       "# range for numeric and date variables, unique values otherwise",
       "summarise_values <- function(x) {",
@@ -634,6 +642,27 @@ create_project_skeleton <- function(
       "}",
       "```",
       "",
+      "# Documenting the variables",
+      "",
+      "There are two ways to document the variables in the processed data. Use whichever suits the project; you do not need both:",
+      "",
+      "- **The codebook .csv above (simpler).** Quick to fill in, readable in Excel, and all that `psychdsish::validator()` asks for.",
+      "- **`dataset_description.json` (more psych-DS compliant).** Machine-readable metadata in the project root, which the [psych-DS](https://psych-ds.github.io/) standard requires. The chunk below writes it from the codebooks, so each variable is still described only once, in the codebook. Data file names in this template already follow the psych-DS convention (`key-value` pairs ending in `_data`).",
+      "",
+      "```{r}",
+      "#| label: dataset-description",
+      "#| eval: false",
+      "",
+      "# change eval to true above to write dataset_description.json on every render",
+      "psychdsish::write_dataset_description(",
+      "  project_root = \"@@ROOT@@\",",
+      "  name = \"title goes here\",",
+      "  description = \"description goes here\"",
+      ")",
+      "```",
+      "",
+      "Check the result against the standard itself with the psych-DS validator at <https://psych-ds.github.io/validator/>.",
+      "",
       ""
     ),
     collapse = "\n"
@@ -665,9 +694,22 @@ create_project_skeleton <- function(
     prefix <- if (multi) paste0("Study ", sub("^study_", "", s), ": ") else ""
     # codebook paths are relative to the .qmd's folder
     codebook <- gsub(
-      "../data/processed",
+      "@@CB_DIR@@",
       rel_path(code_dir, P("data/processed", s)),
       codebook_section,
+      fixed = TRUE
+    )
+    # psych-DS file names: key-value pairs, ending in _data / _codebook
+    codebook <- gsub(
+      "@@ROOT@@",
+      paste(rep("..", length(strsplit(code_dir, "/")[[1]])), collapse = "/"),
+      codebook,
+      fixed = TRUE
+    )
+    codebook <- gsub(
+      "@@CB_STEM@@",
+      paste0(if (multi) paste0("study-", sub("^study_", "", s), "_"), "stage-processed"),
+      codebook,
       fixed = TRUE
     )
     for (f in c("processing", "analysis")) {

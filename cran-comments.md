@@ -11,6 +11,8 @@ This is a new submission.
 - win-builder, Windows Server 2022 x64, R-devel (2026-09-21 r90579): 1 NOTE
 - mac-builder, macOS 26.6 (aarch64), R 4.6.1 (release): OK, no notes
 
+All three were run on version 0.2.2.
+
 ## R CMD check results
 
 0 errors | 0 warnings | 1 note

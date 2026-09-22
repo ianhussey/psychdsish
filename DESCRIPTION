@@ -1,6 +1,6 @@
 Package: psychdsish
 Title: Keep Data, R Code, and Outputs Organized and Reproducible
-Version: 0.2.0
+Version: 0.2.2
 Authors@R:
     person("Ian", "Hussey", email = "ian.hussey@unibe.ch",
            role = c("aut", "cre", "cph"),
