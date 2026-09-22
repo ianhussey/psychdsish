@@ -1,3 +1,74 @@
+# psychdsish 0.2.0
+
+## New features
+
+* `create_project_skeleton()` gains multi-study projects: `studies` sets the
+  number of studies, and `layout` chooses between one folder per study
+  (`"by_study"`, e.g. `study_1/code/`) and one subfolder per study inside each
+  folder (`"by_type"`, e.g. `code/study_1/`). `validator()` detects the layout
+  automatically. Re-running with a larger `studies` adds studies without
+  changing existing files.
+* `create_project_skeleton()` also creates:
+  * an RStudio project file (`rproj = TRUE`) that does not save or restore
+    the workspace;
+  * a `_quarto.yml` (`quarto_yml = TRUE`) that renders the processing and
+    analysis files in order, via *Build > Render Project* in RStudio,
+    `quarto::quarto_render()`, or `quarto render`;
+  * a `CITATION.cff` template, which gives a *Cite this repository* button on
+    GitHub;
+  * `tools/project_creator.qmd`, which re-runs the skeleton with the same
+    settings;
+  * `.gitkeep` files, so that empty folders are tracked by git;
+  * a codebook chunk in each `processing.qmd` that creates and updates a
+    codebook (data dictionary) for the processed data, with columns to
+    complete by hand marked "TO BE COMPLETED MANUALLY".
+* `create_project_skeleton()` now returns the status of every folder and file
+  (`"created"`, `"overwritten"`, `"skipped"`, or `"exists"`) and prints a
+  one-line summary (`quiet = TRUE` turns it off).
+* The generated README has fuller reproducibility instructions, a codebooks
+  section (including guidance on using AI assistants), instructions for
+  customising and validating `CITATION.cff`, and instructions for validating
+  the project.
+* The generated `.qmd` files share an updated YAML header (light/dark themes,
+  table of contents, numbered sections, code tools, self-contained HTML).
+* `validator()` has new checks:
+  * raw data are unchanged since they were first committed to git;
+  * rendered `.html` files are up to date with their `.qmd`;
+  * the README no longer contains template placeholders;
+  * code contains no `setwd()` calls or absolute paths;
+  * every processed data file has a codebook, and codebooks are completed.
+* `validator()` results print as coloured PASS/FAIL/SKIP lines with guidance,
+  checks that cannot be run are reported as SKIP, `summary()` gives the counts
+  and layout, and `strict = TRUE` throws an error on any failure, e.g. to fail
+  a GitHub Actions job.
+* RStudio integration: a project template (*File > New Project > New
+  Directory > psych-DS-ish Project*), and an addin (*Addins > Validate
+  psych-DS-ish project*) that shows the validator's results in the console and
+  the Viewer pane.
+* `delete_project_skeleton()` gains `keep_file`, to name the file to protect
+  instead of detecting it. A dry run no longer asks for confirmation, and the
+  function now returns the paths it deleted, or would delete.
+
+## Bug fixes
+
+* `delete_project_skeleton()` did not recognise the protected file as being
+  inside the project on Windows, so it could delete everything, including the
+  file it was meant to protect.
+* `check_unused_dependencies()` reported every package attached with
+  `library()` or `require()` as unused, because it never counted their calls.
+  It now counts calls both with and without `pkg::`, and renders quietly.
+* `create_project_skeleton()` returned paths with a leading `/` on Windows.
+* The generated README's project structure and reproducibility instructions
+  referred to folders and files that the skeleton does not create.
+
+## Other changes
+
+* Much larger test suite, including snapshot tests of the generated files and
+  end-to-end tests that render each layout with Quarto.
+* New GitHub Actions workflow reporting test coverage with `covr`; both
+  workflows install Quarto so that the rendering tests run.
+* `cli` and `stats` are now imported, and `covr` is suggested.
+
 # psychdsish 0.1.3
 
 * Prepared the package for CRAN submission: added a `testthat` test suite,
