@@ -1,0 +1,13 @@
+# Rendering the project (RStudio: Build > Render Project;
+# R console: quarto::quarto_render(); terminal: quarto render)
+# renders the files below in the order they are listed.
+# Add new .qmd files to this list in the order they should run.
+project:
+  type: default
+  render:
+    - study_1/code/processing.qmd
+    - study_1/code/analysis.qmd
+    - study_2/code/processing.qmd
+    - study_2/code/analysis.qmd
+  # run each file with its own folder as the working directory
+  execute-dir: file

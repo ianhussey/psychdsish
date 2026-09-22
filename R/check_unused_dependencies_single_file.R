@@ -52,12 +52,19 @@
     "    if (!exists(sym, envir = ns, inherits = FALSE)) next",
     "    obj <- getExportedValue(pkg, sym)",
     "    if (!is.function(obj) || is.primitive(obj)) next",
-    "    base::trace(",
-    "      what   = sym,",
-    "      where  = ns,",
-    "      tracer = substitute({ .sn_counts[[PKG]] <<- .sn_counts[[PKG]] + 1L }, list(PKG = pkg)),",
-    "      print  = FALSE",
+    "    # the counter environment itself is embedded in the tracer, because the",
+    "    # traced function cannot see the variables of this document",
+    "    tracer <- substitute(",
+    "      assign(PKG, get(PKG, envir = COUNTS) + 1L, envir = COUNTS),",
+    "      list(PKG = pkg, COUNTS = .sn_counts)",
     "    )",
+    "    # trace both the namespace copy (pkg::fun() calls) and the attached",
+    "    # copy (fun() calls after library(pkg)), which are separate functions",
+    "    try(suppressMessages(base::trace(what = sym, where = ns, tracer = tracer, print = FALSE)), silent = TRUE)",
+    "    pkg_env <- paste0('package:', pkg)",
+    "    if (pkg_env %in% search() && exists(sym, envir = as.environment(pkg_env), inherits = FALSE)) {",
+    "      try(suppressMessages(base::trace(what = sym, where = as.environment(pkg_env), tracer = tracer, print = FALSE)), silent = TRUE)",
+    "    }",
     "  }",
     "  invisible(TRUE)",
     "}",
@@ -65,21 +72,12 @@
     ".sn_orig_library <- base::library",
     ".sn_orig_require <- base::require",
     "",
-    "# Robustly extract the package name, without regex quote stripping",
-    ".sn_pkg_name <- function(package, character.only = FALSE) {",
-    "  if (missing(package)) return(NA_character_)",
-    "  if (isTRUE(character.only)) return(as.character(package))",
-    "  nm <- substitute(package)",
-    "  if (is.symbol(nm))   return(as.character(nm))   # library(dplyr)",
-    "  if (is.character(nm)) return(nm)                # library('dplyr')",
-    "  as.character(nm)",
-    "}",
-    "",
     "library <- function(package, ..., character.only = FALSE) {",
     "  mc <- match.call()",
     "  mc[[1L]] <- quote(.sn_orig_library)",
     "  res <- eval(mc, parent.frame())",
-    "  pkg_chr <- .sn_pkg_name(package, character.only = character.only)",
+    "  # the package name as written in the call, e.g. library(dplyr)",
+    "  pkg_chr <- if (isTRUE(character.only)) as.character(package) else as.character(substitute(package))",
     "  if (!inherits(res, 'try-error') && is.character(pkg_chr) && nzchar(pkg_chr)) {",
     "    try(.sn_install_tracers(pkg_chr), silent = TRUE)",
     "  }",
@@ -90,7 +88,8 @@
     "  mc <- match.call()",
     "  mc[[1L]] <- quote(.sn_orig_require)",
     "  res <- eval(mc, parent.frame())",
-    "  pkg_chr <- .sn_pkg_name(package, character.only = character.only)",
+    "  # the package name as written in the call, e.g. library(dplyr)",
+    "  pkg_chr <- if (isTRUE(character.only)) as.character(package) else as.character(substitute(package))",
     "  if (isTRUE(res) && is.character(pkg_chr) && nzchar(pkg_chr)) {",
     "    try(.sn_install_tracers(pkg_chr), silent = TRUE)",
     "  }",
@@ -125,13 +124,13 @@
     if (!requireNamespace("quarto", quietly = TRUE)) {
       stop("R package 'quarto' not installed.")
     }
-    quarto::quarto_render(tmp, quiet = FALSE)
+    quarto::quarto_render(tmp, quiet = TRUE)
   }
   run_rmd <- function() {
     if (!requireNamespace("rmarkdown", quietly = TRUE)) {
       stop("R package 'rmarkdown' not installed.")
     }
-    rmarkdown::render(tmp, quiet = FALSE, envir = new.env(parent = globalenv()))
+    rmarkdown::render(tmp, quiet = TRUE, envir = new.env(parent = globalenv()))
   }
 
   rendered <- isTRUE(tryCatch(

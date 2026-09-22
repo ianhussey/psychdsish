@@ -1,0 +1,53 @@
+---
+title: "Create a project skeleton following the psych-ds-ish standard"
+author: "author goes here"
+date: today
+editor: source
+format:
+  html:
+    theme:
+      light: flatly
+      dark: darkly
+    toc: true
+    toc-location: right
+    toc-depth: 3
+    number-sections: true
+    code-fold: show
+    code-tools: true
+    code-copy: true
+    code-link: true
+    code-overflow: wrap
+    df-print: paged
+    embed-resources: true
+    fig-width: 7
+    fig-height: 5
+execute:
+  message: false
+  warning: false
+---
+
+## Create project skeleton
+
+```{r}
+
+library(psychdsish)
+
+create_project_skeleton(project_root = "../", studies = 2, layout = "by_type")
+
+```
+
+Note that you could also do this from the console without this .qmd file, if you know your project's file path, e.g., `psychdsish::create_project_skeleton(project_root = "~/git/my_project")`.
+
+## Delete project files and directories except this file
+
+For testing.
+
+WARNING: DELETES ALL FILES IN PARENT DIRECTORY OTHER THAN THE CURRENT FILE!
+
+```{r}
+#| eval: false
+#| include: false
+
+delete_project_skeleton(project_root = "../")
+
+```

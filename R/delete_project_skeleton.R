@@ -37,21 +37,31 @@
 #'   without actually deleting files. Default is `FALSE`.
 #' @param large_n_warn Integer. Threshold number of items that triggers
 #'   an additional confirmation prompt. Default is `10000`.
+#' @param keep_file Path to the file to protect, or `NULL` (default) to
+#'   detect the file the function is being called from. Supply it to run the
+#'   function from the console or a script whose location cannot be
+#'   detected. It must exist; if it is outside `project_root`, nothing is
+#'   protected.
 #'
-#' @return Invisibly returns `NULL` (after deleting) or a list with
-#'   estimated deletion counts when `dry_run = TRUE`.
+#' @return Invisibly, a list with `project_root`, `keep_file`, `paths` (the
+#'   top-level paths deleted, or that would be deleted if `dry_run = TRUE`,
+#'   relative to `project_root`), and `n_items` (the number of files and
+#'   directories they contain, including themselves).
 #'
 #' @section Warning:
 #' Deletion is irreversible. Always test with `dry_run = TRUE` first, and
 #' keep `require_sentinel = TRUE` and `confirm = TRUE` for normal use.
 #'
 #' @details
-#' As an additional safeguard the function must be able to identify the file it
-#' is being called from (via knitr/Quarto, RStudio, or `Rscript --file=`) so
-#' that it never deletes the running script or its parent directories. It is
-#' therefore intended to be run from a script such as
-#' `tools/project_validator.qmd` rather than from a bare interactive console,
-#' and it aborts if the current file cannot be determined.
+#' As an additional safeguard, unless `keep_file` is supplied, the function
+#' must be able to identify the file it is being called from (via
+#' knitr/Quarto, RStudio, or `Rscript --file=`) so that it never deletes the
+#' running script or its parent directories. It is therefore intended to be
+#' run from a script such as `tools/project_creator.qmd`, and it aborts if the
+#' current file cannot be determined.
+#'
+#' A dry run (`dry_run = TRUE`) does not ask for confirmation, because it
+#' deletes nothing.
 #'
 #' @examples
 #' \dontrun{
@@ -65,6 +75,13 @@
 #'
 #' # Skip the interactive prompt (still requires a detectable current file)
 #' delete_project_skeleton("my_project", confirm = FALSE)
+#'
+#' # From the console: name the file to keep
+#' delete_project_skeleton(
+#'   "my_project",
+#'   keep_file = "my_project/tools/project_creator.qmd",
+#'   dry_run = TRUE
+#' )
 #' }
 #' @export
 delete_project_skeleton <- function(
@@ -80,13 +97,17 @@ delete_project_skeleton <- function(
   ),
   confirm = TRUE,
   dry_run = FALSE,
-  large_n_warn = 10000
+  large_n_warn = 10000,
+  keep_file = NULL
 ) {
   # ---------- helpers ----------
+  # forward slashes on every platform, so that the path comparisons below
+  # also work on Windows
   normalize_safe <- function(p, mustWork = FALSE) {
-    tryCatch(normalizePath(p, mustWork = mustWork), error = function(e) {
-      NA_character_
-    })
+    tryCatch(
+      normalizePath(p, winslash = "/", mustWork = mustWork),
+      error = function(e) NA_character_
+    )
   }
   same_path <- function(a, b) {
     aa <- normalize_safe(a, mustWork = FALSE)
@@ -112,19 +133,7 @@ delete_project_skeleton <- function(
     if (anyNA(c(child, parent))) {
       return(FALSE)
     }
-    sep <- .Platform$file.sep
-    startsWith(paste0(child, sep), paste0(parent, sep))
-  }
-  path_depth <- function(paths) {
-    vapply(
-      strsplit(
-        normalize_safe(paths, mustWork = FALSE),
-        .Platform$file.sep,
-        fixed = TRUE
-      ),
-      function(x) sum(nzchar(x)),
-      integer(1)
-    )
+    startsWith(paste0(child, "/"), paste0(sub("/$", "", parent), "/"))
   }
   ancestor_chain <- function(path, stop_at) {
     out <- character(0)
@@ -226,75 +235,80 @@ delete_project_skeleton <- function(
     }
   }
 
-  current_file <- detect_current_file()
-  if (is.na(current_file)) {
-    stop(
-      "Could not detect the current file; aborting to avoid accidental deletion."
-    )
+  if (is.null(keep_file)) {
+    current_file <- detect_current_file()
+    if (is.na(current_file)) {
+      stop(
+        "Could not detect the current file; aborting to avoid accidental deletion. ",
+        "Supply `keep_file` to name the file to protect."
+      )
+    }
+  } else {
+    if (length(keep_file) != 1 || !file.exists(keep_file) || dir.exists(keep_file)) {
+      stop("`keep_file` must be the path of an existing file.")
+    }
+    current_file <- normalize_safe(keep_file, mustWork = TRUE)
   }
 
-  entries <- list.files(
-    project_root,
-    full.names = TRUE,
-    all.files = TRUE,
-    no.. = TRUE
-  )
-  if (!length(entries)) {
-    message("Nothing to delete.")
-    return(invisible(NULL))
+  # ---------- plan: the top-level paths to delete ----------
+  # Everything is deleted except the protected file and the directories that
+  # lead to it; inside those directories, their other contents are deleted.
+  children <- function(d) {
+    list.files(d, full.names = TRUE, all.files = TRUE, no.. = TRUE)
   }
+  if (is_subpath(current_file, project_root)) {
+    keep_dirs <- ancestor_chain(current_file, project_root)
+    to_delete <- unlist(lapply(keep_dirs, children))
+    to_delete <- normalize_safe(to_delete, mustWork = FALSE)
+    to_delete <- to_delete[
+      !vapply(to_delete, same_path, logical(1), b = current_file) &
+        !to_delete %in% normalize_safe(keep_dirs, mustWork = FALSE)
+    ]
+  } else {
+    to_delete <- normalize_safe(children(project_root), mustWork = FALSE)
+  }
+  to_delete <- unique(to_delete[!is.na(to_delete)])
 
-  # Count prospective deletions for warnings / confirmation text
-  prospective_deleted <- (function() {
-    count <- 0L
-    for (e in entries) {
-      e_norm <- normalize_safe(e, mustWork = FALSE)
-      if (is.na(e_norm)) {
-        next
-      }
-      if (dir.exists(e_norm)) {
-        if (!is_subpath(current_file, e_norm)) {
-          # whole dir
-          count <- count +
-            length(list.files(
-              e_norm,
-              all.files = TRUE,
-              recursive = TRUE,
-              include.dirs = TRUE,
-              no.. = TRUE
-            )) +
-            1L
-        } else {
-          # selective inside
-          nested <- list.files(
-            e_norm,
-            full.names = TRUE,
+  n_items <- sum(vapply(
+    to_delete,
+    function(p) {
+      if (dir.exists(p)) {
+        1L +
+          length(list.files(
+            p,
             all.files = TRUE,
             recursive = TRUE,
             include.dirs = TRUE,
             no.. = TRUE
-          )
-          if (length(nested)) {
-            keep_flags <- vapply(
-              nested,
-              function(p) {
-                p_norm <- normalize_safe(p, mustWork = FALSE)
-                isTRUE(
-                  same_path(p_norm, current_file) ||
-                    is_subpath(current_file, p_norm)
-                )
-              },
-              logical(1)
-            )
-            count <- count + sum(!keep_flags)
-          }
-        }
-      } else if (file.exists(e_norm)) {
-        if (!same_path(e_norm, current_file)) count <- count + 1L
+          ))
+      } else {
+        1L
       }
-    }
-    count
-  })()
+    },
+    integer(1)
+  ))
+  result <- list(
+    project_root = project_root,
+    keep_file = current_file,
+    paths = sort(substring(to_delete, nchar(project_root) + 2)),
+    n_items = n_items
+  )
+
+  if (!length(to_delete)) {
+    message("Nothing to delete.")
+    return(invisible(result))
+  }
+
+  if (dry_run) {
+    message(
+      "Dry run: would delete ",
+      format(n_items, big.mark = ","),
+      " items: ",
+      paste(result$paths, collapse = ", "),
+      "\nNo files deleted. Set `dry_run = FALSE` to execute."
+    )
+    return(invisible(result))
+  }
 
   # Interactive confirmation
   if (confirm) {
@@ -305,12 +319,13 @@ delete_project_skeleton <- function(
     }
     cat(
       sprintf(
-        "Are you sure you want to delete EVERYTHING inside:\n  %s\n(except the running file and the minimal directories needed to keep it)\n",
-        project_root
+        "Are you sure you want to delete EVERYTHING inside:\n  %s\n(except %s and the directories needed to keep it)\n",
+        project_root,
+        current_file
       ),
       sprintf(
-        "Prospective deletions: ~%s items.\n",
-        format(prospective_deleted, big.mark = ",")
+        "Prospective deletions: %s items.\n",
+        format(n_items, big.mark = ",")
       ),
       "This cannot be undone.\n",
       sprintf(
@@ -323,7 +338,7 @@ delete_project_skeleton <- function(
     if (!identical(ans, basename(project_root))) {
       stop("Confirmation failed. Aborting without deleting.")
     }
-    if (prospective_deleted >= large_n_warn) {
+    if (n_items >= large_n_warn) {
       ans2 <- readline(sprintf(
         "This is a very large deletion (>= %d items). Type 'YES' to proceed: ",
         large_n_warn
@@ -334,77 +349,10 @@ delete_project_skeleton <- function(
     }
   }
 
-  if (dry_run) {
-    message("Dry run: no files deleted. Set `dry_run = FALSE` to execute.")
-    return(invisible(list(
-      project_root = project_root,
-      estimated_deletions = prospective_deleted
-    )))
-  }
+  # ---------- deletion ----------
+  unlink(to_delete, recursive = TRUE, force = TRUE)
 
-  # ---------- deletion (same logic as before, with protections) ----------
-  deleted <- character(0)
-
-  for (e in entries) {
-    e_norm <- normalize_safe(e, mustWork = FALSE)
-    if (is.na(e_norm)) {
-      next
-    }
-
-    if (dir.exists(e_norm)) {
-      if (!is_subpath(current_file, e_norm)) {
-        unlink(e_norm, recursive = TRUE, force = TRUE)
-        deleted <- c(deleted, e_norm)
-      } else {
-        nested <- list.files(
-          e_norm,
-          full.names = TRUE,
-          all.files = TRUE,
-          recursive = TRUE,
-          include.dirs = TRUE,
-          no.. = TRUE
-        )
-        if (length(nested)) {
-          keep_flags <- vapply(
-            nested,
-            function(p) {
-              p_norm <- normalize_safe(p, mustWork = FALSE)
-              isTRUE(
-                same_path(p_norm, current_file) ||
-                  is_subpath(current_file, p_norm)
-              )
-            },
-            logical(1)
-          )
-          to_delete <- nested[!keep_flags]
-          if (length(to_delete)) {
-            to_delete <- to_delete[order(-path_depth(to_delete))]
-            for (q in to_delete) {
-              if (dir.exists(q)) {
-                unlink(q, recursive = TRUE, force = TRUE)
-              } else if (file.exists(q)) {
-                unlink(q, force = TRUE)
-              }
-            }
-            deleted <- c(deleted, to_delete)
-          }
-        }
-      }
-    } else if (file.exists(e_norm)) {
-      if (!same_path(e_norm, current_file)) {
-        unlink(e_norm, force = TRUE)
-        deleted <- c(deleted, e_norm)
-      }
-    }
-  }
-
-  if (length(deleted)) {
-    message("Deleted: ", paste(basename(deleted), collapse = ", "))
-    message("Protected file: ", current_file)
-  } else {
-    message("Nothing to delete.")
-    message("Protected file: ", current_file)
-  }
-
-  invisible(NULL)
+  message("Deleted: ", paste(result$paths, collapse = ", "))
+  message("Protected file: ", current_file)
+  invisible(result)
 }

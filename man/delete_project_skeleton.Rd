@@ -11,7 +11,8 @@ delete_project_skeleton(
     "_quarto.yml"),
   confirm = TRUE,
   dry_run = FALSE,
-  large_n_warn = 10000
+  large_n_warn = 10000,
+  keep_file = NULL
 )
 }
 \arguments{
@@ -35,10 +36,18 @@ without actually deleting files. Default is \code{FALSE}.}
 
 \item{large_n_warn}{Integer. Threshold number of items that triggers
 an additional confirmation prompt. Default is \code{10000}.}
+
+\item{keep_file}{Path to the file to protect, or \code{NULL} (default) to
+detect the file the function is being called from. Supply it to run the
+function from the console or a script whose location cannot be
+detected. It must exist; if it is outside \code{project_root}, nothing is
+protected.}
 }
 \value{
-Invisibly returns \code{NULL} (after deleting) or a list with
-estimated deletion counts when \code{dry_run = TRUE}.
+Invisibly, a list with \code{project_root}, \code{keep_file}, \code{paths} (the
+top-level paths deleted, or that would be deleted if \code{dry_run = TRUE},
+relative to \code{project_root}), and \code{n_items} (the number of files and
+directories they contain, including themselves).
 }
 \description{
 This function deletes the contents of a project folder, but protects
@@ -64,12 +73,15 @@ is set explicitly.
 deleted is very large.
 }
 
-As an additional safeguard the function must be able to identify the file it
-is being called from (via knitr/Quarto, RStudio, or \verb{Rscript --file=}) so
-that it never deletes the running script or its parent directories. It is
-therefore intended to be run from a script such as
-\code{tools/project_validator.qmd} rather than from a bare interactive console,
-and it aborts if the current file cannot be determined.
+As an additional safeguard, unless \code{keep_file} is supplied, the function
+must be able to identify the file it is being called from (via
+knitr/Quarto, RStudio, or \verb{Rscript --file=}) so that it never deletes the
+running script or its parent directories. It is therefore intended to be
+run from a script such as \code{tools/project_creator.qmd}, and it aborts if the
+current file cannot be determined.
+
+A dry run (\code{dry_run = TRUE}) does not ask for confirmation, because it
+deletes nothing.
 }
 \section{Warning}{
 
@@ -89,5 +101,12 @@ delete_project_skeleton("my_project")
 
 # Skip the interactive prompt (still requires a detectable current file)
 delete_project_skeleton("my_project", confirm = FALSE)
+
+# From the console: name the file to keep
+delete_project_skeleton(
+  "my_project",
+  keep_file = "my_project/tools/project_creator.qmd",
+  dry_run = TRUE
+)
 }
 }

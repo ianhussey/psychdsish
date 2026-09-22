@@ -1,0 +1,106 @@
+---
+title: "processing"
+author: "author goes here"
+date: today
+editor: source
+format:
+  html:
+    theme:
+      light: flatly
+      dark: darkly
+    toc: true
+    toc-location: right
+    toc-depth: 3
+    number-sections: true
+    code-fold: show
+    code-tools: true
+    code-copy: true
+    code-link: true
+    code-overflow: wrap
+    df-print: paged
+    embed-resources: true
+    fig-width: 7
+    fig-height: 5
+execute:
+  message: false
+  warning: false
+---
+
+```{r}
+#| label: setup
+#| include: false
+# Turn off scientific notation globally
+options(scipen = 999)
+```
+
+# Dependencies
+```{r}
+# packages and setup here
+```
+
+# Codebook
+
+A codebook (data dictionary) describes every variable in the processed data. The chunk below creates `../data/processed/processed_codebook.csv` from `data_processed`, or updates it if it already exists. The automatic columns (`type`, `n_missing`, `values`) are refreshed on every render. The manual columns (`description`, `units`, `coding`) start as "TO BE COMPLETED MANUALLY": open the .csv (e.g., in Excel), replace them for every variable (write "none" where a column does not apply), and save it as .csv. Your entries are kept when the codebook is updated.
+
+```{r}
+#| label: codebook
+
+# Rename `data_processed` and the file names to match your data. Save the data
+# with a name ending in "_data" and the codebook with the same name ending in
+# "_codebook", so that psychdsish::validator() can match them, e.g.:
+# write.csv(data_processed, "../data/processed/processed_data.csv", row.names = FALSE)
+
+placeholder <- "TO BE COMPLETED MANUALLY"
+codebook_path <- "../data/processed/processed_codebook.csv"
+
+# range for numeric and date variables, unique values otherwise
+summarise_values <- function(x) {
+  if (all(is.na(x))) {
+    return("all missing")
+  }
+  if (is.numeric(x) || inherits(x, c("Date", "POSIXt"))) {
+    return(paste(min(x, na.rm = TRUE), "to", max(x, na.rm = TRUE)))
+  }
+  values <- sort(unique(as.character(x[!is.na(x)])))
+  if (length(values) > 10) {
+    paste0(length(values), " unique values, e.g., ", paste(head(values, 3), collapse = "; "))
+  } else {
+    paste(values, collapse = "; ")
+  }
+}
+
+if (exists("data_processed")) {
+  codebook <- data.frame(
+    variable = names(data_processed),
+    type = vapply(data_processed, function(x) class(x)[1], character(1)),
+    n_missing = vapply(data_processed, function(x) sum(is.na(x)), integer(1)),
+    values = vapply(data_processed, summarise_values, character(1)),
+    description = placeholder,
+    units = placeholder,
+    coding = placeholder
+  )
+
+  # keep the manual entries from an existing codebook
+  if (file.exists(codebook_path)) {
+    existing <- read.csv(codebook_path, colClasses = "character")
+    matched <- match(codebook$variable, existing$variable)
+    for (col in intersect(c("description", "units", "coding"), names(existing))) {
+      codebook[[col]] <- ifelse(is.na(matched), placeholder, existing[[col]][matched])
+    }
+    dropped <- setdiff(existing$variable, codebook$variable)
+    if (length(dropped) > 0) {
+      message("Removed from the codebook (no longer in the data): ", paste(dropped, collapse = ", "))
+    }
+  }
+
+  write.csv(codebook, codebook_path, row.names = FALSE)
+  codebook
+} else {
+  message("Create `data_processed` above to generate its codebook.")
+}
+```
+
+# Session info
+```{r}
+sessionInfo()
+```

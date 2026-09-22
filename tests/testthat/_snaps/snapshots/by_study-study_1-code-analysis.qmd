@@ -1,0 +1,44 @@
+---
+title: "Study 1: analysis"
+author: "author goes here"
+date: today
+editor: source
+format:
+  html:
+    theme:
+      light: flatly
+      dark: darkly
+    toc: true
+    toc-location: right
+    toc-depth: 3
+    number-sections: true
+    code-fold: show
+    code-tools: true
+    code-copy: true
+    code-link: true
+    code-overflow: wrap
+    df-print: paged
+    embed-resources: true
+    fig-width: 7
+    fig-height: 5
+execute:
+  message: false
+  warning: false
+---
+
+```{r}
+#| label: setup
+#| include: false
+# Turn off scientific notation globally
+options(scipen = 999)
+```
+
+# Dependencies
+```{r}
+# packages and setup here
+```
+
+# Session info
+```{r}
+sessionInfo()
+```
