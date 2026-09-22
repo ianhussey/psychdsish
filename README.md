@@ -47,13 +47,13 @@ I am a big fan of the concept of standards, and the [psych-DS](https://psych-ds.
 
 *But*:
 
-1. I am not *yet* convinced of the utility of psych-DS's .json requirement. a) .json files are a pain to create, and b) they are currently very rarely used in psychology workflows. So, personally, I'm not motivated to put the effort in to creating them or training my students to do so.
+1. I am not convinced that psych-DS's .json requirement should be the *starting point* for most users. a) .json files are a pain to write by hand, and b) they are currently very rarely used in psychology workflows. So I didn't want creating one to be the price of entry for my students. Since the metadata can be generated from a codebook that people fill in anyway, psychdsish now supports it: it just isn't required.
 2. psych-DS is purposefully light-weight on what it requires users to do to be compliant. I'm ok being slightly more heavy handed given that my use case is a) my own projects and b) students in my R/tidyverse classes (see my book at [wrangling.tidyver.se](https://wrangling.tidyver.se/)).
 3. psych-DS focuses on *testing* compliance with the standard but not *assisting* the user in setting up a project that is compliant in the first place. Approached as a human-factors problem, this is likely to decrease uptake of psych-DS, given that tidying up a project after the fact is usually harder than providing a template up front.
 
 ## psych-DS-ish
 
-psych-DS-ish is an R package that therefore: 1) drops the .json requirement, and 2) provides function to create skeleton project structures (`create_project_skeleton()`) or delete them (for testing purposes: `delete_project_skeleton()`) and validate a given project against psych-DS-ish rules (`validator()`). 
+psych-DS-ish is an R package that therefore: 1) makes the .json optional rather than required - `write_dataset_description()` generates it from the project's codebooks when you want it, and `validator()` reports its absence as a warning rather than a failure - and 2) provides functions to create skeleton project structures (`create_project_skeleton()`) or delete them (for testing purposes: `delete_project_skeleton()`) and validate a given project against psych-DS-ish rules (`validator()`). 
 
 Does this contribute to Standards Proliferation? Yes, unfortunately. 
 
@@ -65,7 +65,7 @@ psych-DS-ish makes no attempt to define or maintain the standard itself, which i
 
 ## Goal project structure
 
-This is the project structure I use and teach:
+This is the project structure I use and teach. Data and codebook file names follow the psych-DS convention of `key-value` pairs ending in `_data`, and `dataset_description.json` is optional (see [Codebooks and psych-DS metadata](#codebooks-and-psych-ds-metadata)):
 
 ``` text
 github_repository_name/
@@ -75,24 +75,26 @@ github_repository_name/
 │   ├── analysis.html
 │   ├── analysis.qmd
 │   ├── processing_study_1.html
+│   ├── processing_study_1.qmd
 │   ├── processing_study_2.html
+│   ├── processing_study_2.qmd
 │   └── ...
 ├── data/
 │   ├── processed/
-│   │   ├── study_1_processed_data.csv
-│   │   ├── study_1_processed_codebook.xlsx
-│   │   ├── study_2_processed_data.csv
-│   │   ├── study_2_processed_codebook.xlsx
+│   │   ├── study-1_stage-processed_data.csv
+│   │   ├── study-1_stage-processed_codebook.xlsx
+│   │   ├── study-2_stage-processed_data.csv
+│   │   ├── study-2_stage-processed_codebook.xlsx
 │   │   └── ...
 │   ├── raw/
-│   │   ├── study_1_raw_behavioraltask_data.csv
-│   │   ├── study_2_raw_behavioraltask_data.csv
-│   │   ├── study_1_raw_codebook.xlsx
-│   │   ├── study_2_raw_codebook.xlsx
-│   │   ├── study_1_raw_demographics_data.csv
-│   │   ├── study_2_raw_demographics_data.csv
-│   │   ├── study_1_raw_selfreports_data.csv
-│   │   ├── study_2_raw_selfreports_data.csv
+│   │   ├── study-1_task-behavioral_stage-raw_data.csv
+│   │   ├── study-2_task-behavioral_stage-raw_data.csv
+│   │   ├── study-1_task-behavioral_stage-raw_codebook.xlsx
+│   │   ├── study-2_task-behavioral_stage-raw_codebook.xlsx
+│   │   ├── study-1_task-demographics_stage-raw_data.csv
+│   │   ├── study-2_task-demographics_stage-raw_data.csv
+│   │   ├── study-1_task-selfreports_stage-raw_data.csv
+│   │   ├── study-2_task-selfreports_stage-raw_data.csv
 │   │   └── ...
 │   └── outputs/
 │       ├── plots/
@@ -108,6 +110,7 @@ github_repository_name/
 │       │   ├── cor_matrix_study_2.csv
 │       │   └── ...
 │       └── ...
+├── dataset_description.json
 ├── LICENSE
 ├── methods/
 │   ├── study_1/
@@ -122,7 +125,7 @@ github_repository_name/
 │       └── ...
 ├── preregistration/
 │   └── preregistration.docx
-├── readme.md
+├── README.md
 ├── reports/
 │   ├── preprint/
 │   │   ├── preprint.docx
@@ -173,7 +176,7 @@ github_repository_name/
 ├── CITATION.cff  # citation metadata template: gives a 'Cite this repository' button on GitHub
 ├── github_repository_name.Rproj  # RStudio project file, named after the project folder (skip with `rproj = FALSE`)
 ├── LICENSE  # CC BY 4.0
-├── readme.md  # including overview, structure, reproduciblity instructions, license, suggested citation
+├── README.md  # including overview, structure, reproduciblity instructions, license, suggested citation
 ├── code/
 │   ├── analysis.qmd  # template created
 │   └── processing.qmd  # template created
