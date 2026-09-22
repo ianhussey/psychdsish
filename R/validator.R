@@ -9,6 +9,10 @@
 #'
 #' @param project_root Character scalar. Path to the project root directory.
 #'   Defaults to `"../"`. The path is normalized internally.
+#' @param strict Logical. If `TRUE`, throw an error when any check fails,
+#'   listing the failed checks and how to fix them. Useful in continuous
+#'   integration (e.g., GitHub Actions), where the error makes the job fail.
+#'   Defaults to `FALSE`.
 #'
 #' @details
 #' The validator performs several categories of checks:
@@ -28,13 +32,18 @@
 #' }
 #'
 #' @return
-#' A tibble with one row per check, containing:
+#' A tibble of class `psychdsish_validation` with one row per check
+#' (failures first), containing:
 #' \describe{
 #'   \item{Test}{Description of the check performed.}
 #'   \item{Status}{Either `"PASS"` or `"FAIL"`.}
 #'   \item{Details / Guidance}{Additional information, such as instructions
 #'         for fixing failures or offending file paths.}
 #' }
+#' Printing it shows coloured PASS/FAIL results with guidance for failures.
+#' `summary()` returns a list with `project_root`, `n_pass`, `n_fail`, and
+#' `passed` (`TRUE` if no check failed). If `strict = TRUE` and any check
+#' fails, an error is thrown instead.
 #'
 #' @examples
 #' \dontrun{
@@ -43,6 +52,12 @@
 #'
 #' # Pretty-print results in the console
 #' print(results)
+#'
+#' # Overall result
+#' summary(results)$passed
+#'
+#' # Fail a CI job (e.g., GitHub Actions) if any check fails
+#' validator(".", strict = TRUE)
 #'
 #' # Display results as a styled HTML table
 #' library(knitr)
@@ -53,7 +68,7 @@
 #' }
 #'
 #' @export
-validator <- function(project_root = "../") {
+validator <- function(project_root = "../", strict = FALSE) {
   # --- Configuration ---
   project_root <- fs::path_abs(project_root)
   all_paths <- fs::dir_ls(
@@ -464,5 +479,68 @@ validator <- function(project_root = "../") {
       `Details / Guidance` = details
     )
 
-  return(res)
+  attr(res, "project_root") <- as.character(project_root)
+  class(res) <- c("psychdsish_validation", class(res))
+
+  if (strict && n_fail > 0) {
+    failed <- res[res$Status == "FAIL", ]
+    cli::cli_abort(c(
+      "{n_fail} of {n_pass + n_fail} psych-DS-ish check{?s} failed in {.path {project_root}}.",
+      stats::setNames(
+        paste0(failed$Test, ": ", failed$`Details / Guidance`),
+        rep("x", nrow(failed))
+      )
+    ))
+  }
+
+  res
+}
+
+#' @export
+print.psychdsish_validation <- function(x, ...) {
+  needed <- c("Test", "Status", "Details / Guidance")
+  # fall back to the default tibble print if the structure has been modified
+  if (!all(needed %in% names(x))) {
+    return(NextMethod())
+  }
+  smry <- summary(x)
+  line <- function(...) cat(..., "\n", sep = "")
+
+  line(cli::rule(left = "psych-DS-ish validation"))
+  if (!is.null(smry$project_root)) {
+    line(cli::col_grey(smry$project_root))
+  }
+  for (i in seq_len(nrow(x))) {
+    if (x$Status[i] == "FAIL") {
+      line(cli::col_red(paste(cli::symbol$cross, "FAIL")), " ", x$Test[i])
+      details <- x$`Details / Guidance`[i]
+      if (!is.na(details) && details != "-") {
+        line("       ", cli::col_grey(details))
+      }
+    } else {
+      line(cli::col_green(paste(cli::symbol$tick, "PASS")), " ", x$Test[i])
+    }
+  }
+  line(cli::rule())
+  if (smry$passed) {
+    line(cli::col_green(sprintf("All %d checks passed.", smry$n_pass)))
+  } else {
+    line(cli::col_red(sprintf(
+      "%d of %d checks failed.",
+      smry$n_fail,
+      smry$n_pass + smry$n_fail
+    )))
+  }
+  invisible(x)
+}
+
+#' @export
+summary.psychdsish_validation <- function(object, ...) {
+  n_fail <- sum(object$Status == "FAIL")
+  list(
+    project_root = attr(object, "project_root"),
+    n_pass = sum(object$Status == "PASS"),
+    n_fail = n_fail,
+    passed = n_fail == 0
+  )
 }

@@ -4,20 +4,30 @@
 \alias{validator}
 \title{Validate a project directory structure against psych-ds-ish requirements}
 \usage{
-validator(project_root = "../")
+validator(project_root = "../", strict = FALSE)
 }
 \arguments{
 \item{project_root}{Character scalar. Path to the project root directory.
 Defaults to \code{"../"}. The path is normalized internally.}
+
+\item{strict}{Logical. If \code{TRUE}, throw an error when any check fails,
+listing the failed checks and how to fix them. Useful in continuous
+integration (e.g., GitHub Actions), where the error makes the job fail.
+Defaults to \code{FALSE}.}
 }
 \value{
-A tibble with one row per check, containing:
+A tibble of class \code{psychdsish_validation} with one row per check
+(failures first), containing:
 \describe{
 \item{Test}{Description of the check performed.}
 \item{Status}{Either \code{"PASS"} or \code{"FAIL"}.}
 \item{Details / Guidance}{Additional information, such as instructions
 for fixing failures or offending file paths.}
 }
+Printing it shows coloured PASS/FAIL results with guidance for failures.
+\code{summary()} returns a list with \code{project_root}, \code{n_pass}, \code{n_fail}, and
+\code{passed} (\code{TRUE} if no check failed). If \code{strict = TRUE} and any check
+fails, an error is thrown instead.
 }
 \description{
 This function checks whether a project directory follows a defined set
@@ -51,6 +61,12 @@ results <- validator("../")
 
 # Pretty-print results in the console
 print(results)
+
+# Overall result
+summary(results)$passed
+
+# Fail a CI job (e.g., GitHub Actions) if any check fails
+validator(".", strict = TRUE)
 
 # Display results as a styled HTML table
 library(knitr)

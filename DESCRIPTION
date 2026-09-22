@@ -26,12 +26,14 @@ RoxygenNote: 7.3.2
 Depends:
     R (>= 4.1)
 Imports:
+    cli,
     dplyr,
     fs,
     jsonlite,
     purrr,
     quarto,
     rmarkdown,
+    stats,
     stringr,
     styler,
     tibble,

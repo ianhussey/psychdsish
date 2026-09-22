@@ -132,3 +132,27 @@ test_that("create_project_skeleton respects quarto_yml = FALSE", {
   readme <- readLines(file.path(root, "README.md"), warn = FALSE)
   expect_false(any(grepl("_quarto.yml", readme, fixed = TRUE)))
 })
+
+test_that("validator print, summary, and strict mode work", {
+  root <- make_skeleton()
+  on.exit(unlink(root, recursive = TRUE, force = TRUE), add = TRUE)
+
+  res <- validator(project_root = root)
+  expect_s3_class(res, "psychdsish_validation")
+  expect_true(summary(res)$passed)
+  expect_equal(summary(res)$n_fail, 0L)
+  expect_output(print(res), "All [0-9]+ checks passed")
+  expect_no_error(validator(project_root = root, strict = TRUE))
+
+  # introduce a failure: a filename containing a space
+  file.create(file.path(root, "methods", "bad name.docx"))
+  res <- validator(project_root = root)
+  expect_false(summary(res)$passed)
+  expect_equal(summary(res)$n_fail, 1L)
+  expect_output(print(res), "1 of [0-9]+ checks failed")
+  expect_output(print(res), "bad name.docx")
+  expect_error(
+    validator(project_root = root, strict = TRUE),
+    "No spaces in filenames"
+  )
+})
