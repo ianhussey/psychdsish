@@ -7,19 +7,25 @@ This is a new submission.
 - local macOS (aarch64), R 4.5.2 (release)
 - GitHub Actions R-CMD-check: macOS (release), Windows (release),
   Ubuntu (devel, release, oldrel-1)
-- TODO before submitting: win-builder R-devel and R-release
-  (`devtools::check_win_devel()`, `devtools::check_win_release()`) and
-  mac-builder (`devtools::check_mac_release()`). Record the results here,
-  and remove this item.
+- win-builder, Windows Server 2022 x64, R 4.6.1 (release): 1 NOTE
+- win-builder, Windows Server 2022 x64, R-devel (2026-09-21 r90579): 1 NOTE
+- mac-builder, macOS 26.6 (aarch64), R 4.6.1 (release): OK, no notes
 
 ## R CMD check results
 
 0 errors | 0 warnings | 1 note
 
-* This is a new submission.
+The one NOTE is from the CRAN incoming checks on win-builder:
 
-(Local `R CMD check --as-cran --run-donttest` gives 0 errors, 0 warnings,
-and 0 notes; the "New submission" NOTE appears on the CRAN incoming checks.)
+* New submission.
+
+* Possibly misspelled words in DESCRIPTION: Addins, Hussey, README,
+  codebook, validator. These are spelled correctly: 'Hussey' is the
+  maintainer's surname, 'Addins' is the name of the 'RStudio' menu,
+  'README', 'codebook', and 'validator' are used in their ordinary sense.
+
+Local `R CMD check --as-cran --run-donttest` (including the PDF manual) and
+the mac-builder check both give 0 errors, 0 warnings, and 0 notes.
 
 ## Notes for the reviewer
 
