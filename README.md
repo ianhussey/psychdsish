@@ -43,12 +43,12 @@ Not using RStudio? Steps 1, 3 and 4 are `psychdsish::create_project_skeleton("~/
 
 ## Data Standards
 
-I am a big fan of the concept of standards, and the [psych-DS](https://psych-ds.github.io/) data standard specifically. Huge credit to Melissa Klein Struhl for leading it. 
+I am a big fan of the concept of standards, and the [psych-DS](https://psych-ds.github.io/) data standard specifically. Huge credit to Melissa Klein Struhl for leading it and all the psych-DS team.
 
 *But*:
 
 1. I am not *yet* convinced of the utility of psych-DS's .json requirement. a) .json files are a pain to create, and b) they are currently very rarely used in psychology workflows. So, personally, I'm not motivated to put the effort in to creating them or training my students to do so.
-2. psych-DS is purposefully light-weight on what it requires users to do to be compliant. I'm ok being slightly more heavy handed given that my use case is a) my own projects and b) students in my R/tidyverse classes (see my book at [wrangling.tidyver.se](https://wrangling.tidyver.se/).
+2. psych-DS is purposefully light-weight on what it requires users to do to be compliant. I'm ok being slightly more heavy handed given that my use case is a) my own projects and b) students in my R/tidyverse classes (see my book at [wrangling.tidyver.se](https://wrangling.tidyver.se/)).
 3. psych-DS focuses on *testing* compliance with the standard but not *assisting* the user in setting up a project that is compliant in the first place. Approached as a human-factors problem, this is likely to decrease uptake of psych-DS, given that tidying up a project after the fact is usually harder than providing a template up front.
 
 ## psych-DS-ish
@@ -321,13 +321,6 @@ Results of `validator()` in a freshly generated project skeleton - note that som
 ![](./man/figures/validator.png)
 
 <br>
-
-
-
-## TODO
-
-- add argument to validator to toggle assessment of psych-DS vs psych-ds-ish? Or if psych-DS release their own R validator, adopt it here?
-- add checker for data files present but neither read nor written
 
 ## License
 
