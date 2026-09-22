@@ -131,6 +131,7 @@ This is the skeleton that  `create_project_skeleton()` creates:
 github_repository_name/
 ├── .gitattributes  # ignores .html files to help github detect R repos
 ├── .gitignore  # includes reasonable defaults
+├── github_repository_name.Rproj  # RStudio project file, named after the project folder (skip with `rproj = FALSE`)
 ├── LICENSE  # CC BY 4.0
 ├── readme.md  # including overview, structure, reproduciblity instructions, license, suggested citation
 ├── code/
@@ -145,7 +146,11 @@ github_repository_name/
 │   └── raw/
 ├── methods/
 ├── preregistration/
-└── reports/
+├── reports/
+└── tools/
+    ├── project_creator.qmd  # re-runs create_project_skeleton() from within the project
+    ├── project_validator.qmd  # runs validator() on the project
+    └── style_all_files.qmd  # applies tidyverse code style to all .qmd, .Rmd, and .R files
 ```
 
 

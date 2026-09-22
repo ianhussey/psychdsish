@@ -4,7 +4,12 @@
 \alias{create_project_skeleton}
 \title{Create an opinionated project directory skeleton following psych-ds-ish standard}
 \usage{
-create_project_skeleton(project_root = "../", overwrite = FALSE)
+create_project_skeleton(
+  project_root = "../",
+  overwrite = FALSE,
+  rproj = TRUE,
+  quiet = FALSE
+)
 }
 \arguments{
 \item{project_root}{Character scalar. Path to the root directory where
@@ -15,10 +20,24 @@ console.}
 
 \item{overwrite}{Logical. If \code{TRUE}, existing files will be overwritten.
 Defaults to \code{FALSE}.}
+
+\item{rproj}{Logical. If \code{TRUE} (default), an RStudio project file named
+after the project root directory (e.g., \code{my_project.Rproj}) is created,
+unless the project root already contains an \code{.Rproj} file.}
+
+\item{quiet}{Logical. If \code{FALSE} (default), a one-line summary of what was
+created, overwritten, or skipped is printed as a message.}
 }
 \value{
-(Invisibly) a \code{data.frame} listing the created paths and their type
-(\code{"dir"} or \code{"file"}).
+(Invisibly) a \code{data.frame} with one row per directory or file the function
+handled, containing:
+\describe{
+\item{path}{Path relative to \code{project_root}.}
+\item{type}{Either \code{"dir"} or \code{"file"}.}
+\item{status}{\code{"created"} if it did not exist, \code{"overwritten"} if it
+existed and \code{overwrite = TRUE}, \code{"skipped"} if a file existed and
+\code{overwrite = FALSE}, or \code{"exists"} if a directory already existed.}
+}
 }
 \description{
 This function creates a standardised-ish directory and file structure for a
@@ -53,15 +72,24 @@ The following directories are created (if not already present):
 \item \verb{tools/} - utility scripts and reproducibility helpers
 }
 
+Directories that would otherwise be empty receive an empty \code{.gitkeep} file
+so that they are tracked by Git.
+
 The following files are created (if not already present):
 \itemize{
 \item \code{LICENSE} - CC BY 4.0 license text
 \item \code{README.md} - skeleton README describing project aims and structure
+\item \verb{<project_name>.Rproj} - RStudio project file that does not save or
+restore the workspace (if \code{rproj = TRUE})
 \item \code{.gitignore} - ignores R history, session data, caches, temp files,
 OS-specific clutter, and large output directories
 \item \code{code/analysis.qmd} - Quarto analysis template with metadata, setup
 chunk, and \code{sessionInfo()} chunk
 \item \code{code/processing.qmd} - Quarto processing template (same structure)
+\item \code{tools/project_creator.qmd} - re-runs \code{create_project_skeleton()}
+from within the project, with an optional (not evaluated by default)
+chunk calling \code{delete_project_skeleton()} for testing
+\item \code{tools/project_validator.qmd} - runs \code{validator()} on the project
 \item \code{tools/style_all_files.qmd} - reproducibility tool to apply
 tidyverse code style to all \code{.qmd}, \code{.Rmd}, and \code{.R} files
 }

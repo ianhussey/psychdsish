@@ -7,7 +7,7 @@ make_skeleton <- function() {
     paste0("psychdsish_test_", as.integer(Sys.time()), "_", sample.int(1e6, 1))
   )
   dir.create(root, showWarnings = FALSE, recursive = TRUE)
-  create_project_skeleton(project_root = root, overwrite = TRUE)
+  create_project_skeleton(project_root = root, overwrite = TRUE, quiet = TRUE)
   root
 }
 
@@ -34,6 +34,10 @@ test_that("create_project_skeleton builds the expected directories and files", {
 
   expect_true(file.exists(file.path(root, ".gitignore")))
   expect_true(file.exists(file.path(root, "LICENSE")))
+  expect_true(file.exists(file.path(root, paste0(basename(root), ".Rproj"))))
+  for (f in c("project_creator.qmd", "project_validator.qmd", "style_all_files.qmd")) {
+    expect_true(file.exists(file.path(root, "tools", f)), info = f)
+  }
   expect_true(any(tolower(list.files(root)) == "readme.md"))
 })
 
@@ -73,4 +77,45 @@ test_that("delete_project_skeleton aborts when the current file cannot be detect
     "Could not detect the current file"
   )
   expect_true(dir.exists(root))
+})
+
+test_that("create_project_skeleton respects rproj = FALSE and existing .Rproj files", {
+  root <- file.path(tempdir(), paste0("psychdsish_rproj_", sample.int(1e6, 1)))
+  dir.create(root, showWarnings = FALSE, recursive = TRUE)
+  on.exit(unlink(root, recursive = TRUE, force = TRUE), add = TRUE)
+
+  create_project_skeleton(project_root = root, rproj = FALSE, quiet = TRUE)
+  expect_length(list.files(root, pattern = "\\.Rproj$"), 0)
+
+  file.create(file.path(root, "existing.Rproj"))
+  create_project_skeleton(project_root = root, quiet = TRUE)
+  expect_equal(list.files(root, pattern = "\\.Rproj$"), "existing.Rproj")
+})
+
+test_that("create_project_skeleton reports created, skipped, and overwritten files", {
+  root <- file.path(tempdir(), paste0("psychdsish_status_", sample.int(1e6, 1)))
+  on.exit(unlink(root, recursive = TRUE, force = TRUE), add = TRUE)
+
+  expect_message(
+    first <- create_project_skeleton(project_root = root),
+    "skipped 0 existing files"
+  )
+  expect_true(all(first$status == "created"))
+  expect_true(all(c(".gitignore", ".gitattributes", "LICENSE") %in% first$path))
+  expect_true(file.exists(file.path(root, "data", "raw", ".gitkeep")))
+
+  expect_message(
+    second <- create_project_skeleton(project_root = root),
+    "use overwrite = TRUE"
+  )
+  expect_true(all(second$status[second$type == "file"] == "skipped"))
+  expect_true(all(second$status[second$type == "dir"] == "exists"))
+
+  third <- create_project_skeleton(
+    project_root = root,
+    overwrite = TRUE,
+    quiet = TRUE
+  )
+  expect_true(all(third$status[third$type == "file"] == "overwritten"))
+  expect_silent(create_project_skeleton(project_root = root, quiet = TRUE))
 })
