@@ -27,6 +27,20 @@ You can install the development version of `psychdsish` from GitHub with:
 remotes::install_github("ianhussey/psychdsish")
 ```
 
+## Quickstart
+
+In RStudio, from a standing start:
+
+1. **Create a project.** *File > New Project > New Directory > psych-DS-ish Project*. Give it a directory name, set the number of studies if there is more than one, and click *Create Project*. You get the folder structure below, a README, a licence, a `CITATION.cff`, a `.gitignore`, and Quarto templates for processing and analysis code, opened ready to work on.
+
+2. **Write your code.** Put your raw data in `data/raw/`, then write `code/processing.qmd` to clean it and `code/analysis.qmd` to analyse it. Each file runs from its own folder, so paths are relative, e.g. `../data/raw/my_data.csv`. `processing.qmd` includes a chunk that creates a codebook describing every variable in your processed data.
+
+3. **Reproduce all results.** Click *Build > Render Project* (top right). This renders `processing.qmd` and then `analysis.qmd`, in the order listed in `_quarto.yml`, so your results are always regenerated from the raw data in the right order. Rendering stops at the first error.
+
+4. **Check the project.** Click *Addins > Validate psych-DS-ish project*. The results appear in the console and as a table in the Viewer pane, with guidance on how to fix anything that fails.
+
+Not using RStudio? Steps 1, 3 and 4 are `psychdsish::create_project_skeleton("~/git/my_project")`, `quarto::quarto_render()` and `psychdsish::validator(".")` from the R console.
+
 ## Data Standards
 
 I am a big fan of the concept of standards, and the [psych-DS](https://psych-ds.github.io/) data standard specifically. Huge credit to Melissa Klein Struhl for leading it. 
