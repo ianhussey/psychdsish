@@ -32,6 +32,19 @@
   }
 
   out_json <- tempfile(fileext = ".json")
+  # remove the instrumented copy, its rendered output, and the results file
+  on.exit(
+    unlink(
+      c(
+        tmp,
+        out_json,
+        paste0(tools::file_path_sans_ext(tmp), c(".html", ".md", ".knit.md")),
+        paste0(tools::file_path_sans_ext(tmp), "_files")
+      ),
+      recursive = TRUE
+    ),
+    add = TRUE
+  )
   out_json_esc <- gsub("\\\\", "/", out_json)
 
   # ---- injected setup chunk (built as lines to avoid escaping hell) ----

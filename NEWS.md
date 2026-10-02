@@ -1,3 +1,20 @@
+# psychdsish 0.2.3
+
+Changes in response to the CRAN review.
+
+## Breaking changes
+
+* `print_poorly_styled_code()` is renamed to `poorly_styled_code()`. It now
+  returns the example code as a character vector, which prints as before and
+  can be passed directly to `styler::style_text()`, instead of writing it to
+  the console with `cat()`.
+
+## Minor improvements
+
+* `check_unused_dependencies()` now deletes the temporary files it renders.
+* The confirmation prompt in `delete_project_skeleton()` is written with
+  `message()` rather than `cat()`.
+
 # psychdsish 0.2.2
 
 ## Bug fixes

@@ -1,12 +1,12 @@
-#' Print a deliberately poorly styled tidyverse code example
+#' A deliberately poorly styled tidyverse code example
 #'
-#' This function prints a long chunk of R/tidyverse code that has intentionally
+#' Returns a long chunk of R/tidyverse code that has intentionally
 #' inconsistent formatting, spacing, and indentation. It is designed for use in
 #' demonstrations of code style tools such as [styler::style_text()] or
 #' [styler::style_file()].
 #'
 #' @details
-#' The printed code:
+#' The code:
 #' - Loads `dplyr`, `ggplot2`, and `stringr`.
 #' - Performs grouping, summarisation, filtering, joining, and plotting on
 #'   the built-in `mtcars` dataset.
@@ -15,25 +15,25 @@
 #'
 #' The output is meant to provide an example input for automatic code
 #' formatting tools, so that users can compare the *before* (poor style) and
-#' *after* (styled) versions.
+#' *after* (styled) versions. The code is only returned, never run.
 #'
 #' @return
-#' Invisibly returns `NULL`. The function is called for its side effect of
-#' printing the poorly styled code to the console.
+#' A character vector of class `psychdsish_code`, with one element per line of
+#' code. Printing it shows the code in the console; it can be passed directly
+#' to [styler::style_text()] or written to a file with [writeLines()].
 #'
 #' @examples
-#' # Print the messy code to the console
-#' print_poorly_styled_code()
+#' # Show the messy code
+#' code <- poorly_styled_code()
+#' code
 #'
 #' # Pass it to styler to see how formatting improves
-#' styled <- styler::style_text(capture.output(print_poorly_styled_code()))
-#' styled
+#' styler::style_text(code)
 #'
 #' @seealso [styler::style_text()], [styler::style_file()]
 #' @export
-print_poorly_styled_code <- function() {
-  cat(
-    r"(
+poorly_styled_code <- function() {
+  code <- r"(
 library(dplyr)
 library(ggplot2)
 library(stringr)
@@ -68,5 +68,12 @@ axis.text.x=element_text(angle=45,hjust=1)
 x="Group",y="Average MPG",title="Badly Styled Tidyverse Example")+
 guides(fill=guide_legend(title="Transmission"))+coord_flip()
 )"
-  )
+  lines <- strsplit(trimws(code, which = "left"), "\n", fixed = TRUE)[[1]]
+  structure(lines, class = "psychdsish_code")
+}
+
+#' @export
+print.psychdsish_code <- function(x, ...) {
+  cat(unclass(x), sep = "\n")
+  invisible(x)
 }

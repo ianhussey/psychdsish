@@ -58,9 +58,12 @@ test_that("style_all_files handles no matching files", {
   expect_length(res, 0)
 })
 
-test_that("print_poorly_styled_code prints parseable code that styler changes", {
+test_that("poorly_styled_code returns parseable code that styler changes", {
   skip_if_not_installed("styler")
-  code <- capture.output(print_poorly_styled_code())
+  code <- poorly_styled_code()
+  expect_s3_class(code, "psychdsish_code")
+  expect_identical(capture.output(print(code)), unclass(code))
+  code <- unclass(code)
   expect_true(any(grepl("mtcars", code, fixed = TRUE)))
   expect_no_error(parse(text = code))
   expect_false(identical(as.character(styler::style_text(code)), code))

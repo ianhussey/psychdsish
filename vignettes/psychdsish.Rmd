@@ -122,11 +122,16 @@ delete_project_skeleton(project_root = project, confirm = FALSE)
 dir.exists(project)
 ```
 
+```{r, include = FALSE}
+# remove the protected file left behind so the vignette leaves no files in tempdir()
+unlink(project, recursive = TRUE)
+```
+
 ## Where to go next
 
 - `?create_project_skeleton` for every directory and template that is created.
 - `?validator` for the complete list of validation rules.
 - The package also ships small helpers for tidying code style
-  (`style_all_files()`, `print_poorly_styled_code()`) and for spotting unused
+  (`style_all_files()`, `poorly_styled_code()`) and for spotting unused
   dependencies and objects (`check_unused_dependencies()`,
   `check_unused_objects()`).

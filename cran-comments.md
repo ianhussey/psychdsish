@@ -1,6 +1,25 @@
-## Submission
+## Resubmission
 
-This is a new submission.
+This is a resubmission. In response to the review:
+
+* Software names in single quotes: all software, package, and API names in
+  the Title and Description are in single quotes. 'Quarto' (capital Q) refers
+  to the Quarto publishing system (<https://quarto.org>), not to the R package
+  'quarto', which the Description does not mention. The same goes for 'Git',
+  'RStudio', and the 'psych-DS' standard.
+* Console output that cannot be suppressed: `print_poorly_styled_code()`, which
+  printed example code with `cat()`, is replaced by `poorly_styled_code()`.
+  It returns the code as a character vector of class `psychdsish_code`, and a
+  `print()` method displays it.
+  The confirmation prompt in `delete_project_skeleton()` now uses `message()`
+  and `readline()` instead of `cat()`; it appears only in interactive
+  sessions and only when `confirm = TRUE`. The other remaining `cat()` and
+  `print()` calls are in the `print()` method for validation results and in
+  the RStudio addin `validator_addin()`, which is interactive.
+
+I also checked the package against the rest of the CRAN Cookbook. As a
+result, `check_unused_dependencies()` now deletes the temporary files it
+renders, and the vignette removes the demo project it creates in `tempdir()`.
 
 ## Test environments
 
@@ -11,7 +30,9 @@ This is a new submission.
 - win-builder, Windows Server 2022 x64, R-devel (2026-09-21 r90579): 1 NOTE
 - mac-builder, macOS 26.6 (aarch64), R 4.6.1 (release): OK, no notes
 
-All three were run on version 0.2.2.
+The local check was run on version 0.2.3. The GitHub Actions, win-builder,
+and mac-builder checks were run on version 0.2.2, before the changes listed
+above.
 
 ## R CMD check results
 

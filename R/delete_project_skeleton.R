@@ -318,7 +318,7 @@ delete_project_skeleton <- function(
         "Confirmation required but session is non-interactive. Run interactively or set `confirm = FALSE` (only if you are sure)."
       )
     }
-    cat(
+    message(
       sprintf(
         "Are you sure you want to delete EVERYTHING inside:\n  %s\n(except %s and the directories needed to keep it)\n",
         project_root,
@@ -328,14 +328,12 @@ delete_project_skeleton <- function(
         "Prospective deletions: %s items.\n",
         format(n_items, big.mark = ",")
       ),
-      "This cannot be undone.\n",
-      sprintf(
-        "To proceed, type the folder name exactly: \"%s\"\n> ",
-        basename(project_root)
-      ),
-      sep = ""
+      "This cannot be undone."
     )
-    ans <- readline()
+    ans <- readline(sprintf(
+      "To proceed, type the folder name exactly: \"%s\"\n> ",
+      basename(project_root)
+    ))
     if (!identical(ans, basename(project_root))) {
       stop("Confirmation failed. Aborting without deleting.")
     }
