@@ -23,8 +23,15 @@ keywords:
   - research data management
   - R
 version: 0.2.3
-date-released: "2026-07-19"
+date-released: "2026-10-02"
 doi: 10.5281/zenodo.21441984
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.21441984
+    description: Concept DOI, which always resolves to the latest version
+  - type: doi
+    value: 10.5281/zenodo.23104501
+    description: DOI of version 0.2.3
 license: MIT
 url: "https://github.com/ianhussey/psychdsish"
 repository-code: "https://github.com/ianhussey/psychdsish"
